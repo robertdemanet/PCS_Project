@@ -1,325 +1,189 @@
-#include "Utils.hpp"
-#include <iostream>
+#include "GeometryLibrary.hpp"
+
 #include <fstream>
-#include <sstream>
-#include <limits>
+#include <vector>
 
-namespace PolygonalLibrary {
-bool ImportMesh(const string& filepath,
-                PolygonalMesh& mesh)
+namespace GeometryLibrary{
+//****************************************************************************************************************
+bool testCircumference(vector<vector<double>> fracture1,
+                       vector<vector<double>> fracture2)
 {
-    if(!ImportCell0Ds(filepath + "/Cell0Ds.csv",
-                       mesh))
+    Vector3d centroid1 = computeCentroid(fracture1);
+    Vector3d centroid2 = computeCentroid(fracture2);
+    unsigned int numVertices1 = fracture1.size();
+    unsigned int numVertices2 = fracture2.size();
+    double radius1 = 0.00;
+    double radius2 = 0.00;
+    vector<double> distances1;
+    vector<double> distances2;
+
+    for (unsigned int v = 0; v < numVertices1; ++v)
+    {
+        Eigen::Vector3d vertex1(fracture1[v][0], fracture1[v][1], fracture1[v][2]);
+        Vector3d diff1 = centroid1 - vertex1;
+        double distance1 = diff1.norm();
+        distances1.push_back(distance1);
+        radius1 = std::max(radius1, distance1);
+    }
+
+
+    for (unsigned int v = 0; v < numVertices2; ++v)
+    {
+        Eigen::Vector3d vertex2(fracture2[v][0], fracture2[v][1], fracture2[v][2]);
+        Vector3d diff2 = centroid2 - vertex2;
+        double distance2 = diff2.norm();
+        distances2.push_back(distance2);
+        radius2 = std::max(radius2, distance2);
+    }
+
+    Vector3d diff_centroids = centroid1 - centroid2;
+    double distance_centroids = diff_centroids.norm();
+
+    if(distance_centroids > (radius1 + radius2))
     {
         return false;
     }
     else
     {
-        cout << "Cell0D marker:" << endl;
-        for(auto it = mesh.Cell0DMarkers.begin(); it != mesh.Cell0DMarkers.end(); it++)
-        {
-            cout << "key:\t" << it -> first << "\t values:";
-            for(const unsigned int id : it -> second)
-                cout << "\t" << id;
-
-            cout << endl;
-        }
+        return true;
     }
+}
 
-    if(!ImportCell1Ds(filepath + "/Cell1Ds.csv",
-                       mesh))
+//****************************************************************************************************************
+Vector3d computeCentroid(vector<vector<double>> singularListVertices)
+{
+    unsigned int numVertices = singularListVertices.size();
+    Vector3d centroid;
+    double sum_x = 0;
+    double sum_y = 0;
+    double sum_z = 0;
+    for (unsigned int j = 0; j < numVertices; ++j)
     {
-        return false;
-    }
-    else
-    {
-        cout << "Cell1D marker:" << endl;
-        for(auto it = mesh.Cell1DMarkers.begin(); it != mesh.Cell1DMarkers.end(); it++)
+        for (unsigned int d = 0; d < 3; ++d)
         {
-            cout << "key:\t" << it -> first << "\t values:";
-            for(const unsigned int id : it -> second)
-                cout << "\t" << id;
-
-            cout << endl;
-        }
-    }
-
-    if(!ImportCell2Ds(filepath + "/Cell2Ds.csv",
-                       mesh))
-    {
-        return false;
-    }
-    else
-    {
-        cout << "Cell2D marker:" << endl;
-        for(auto it = mesh.Cell2DMarkers.begin(); it != mesh.Cell2DMarkers.end(); it++)
-        {
-            cout << "key:\t" << it -> first << "\t values:";
-            for(const unsigned int id : it -> second)
-                cout << "\t" << id;
-
-            cout << endl;
-        }
-
-        for(unsigned int c = 0; c < mesh.NumberCell2D; c++)
-        {
-            vector<unsigned int> edges = mesh.Cell2DEdges[c];
-
-            std::vector<double> vecX;
-            std::vector<double> vecY;
-
-            unsigned int n=edges.size();
-            vecX.reserve(2*n);
-            vecY.reserve(2*n);
-
-
-
-            for(unsigned int e = 0; e < n; e++)
+            if(d = 0)
             {
-                const unsigned int origin = mesh.Cell1DVertices[edges[e]][0];
-                const unsigned int end = mesh.Cell1DVertices[edges[e]][1];
-
-                const double Xorigin=mesh.Cell0DCoordinates[origin][0];
-                const double Yorigin=mesh.Cell0DCoordinates[origin][1];
-                const double Xend=mesh.Cell0DCoordinates[end][0];
-                const double Yend=mesh.Cell0DCoordinates[end][1];
-
-                vecX.push_back(Xorigin);
-                vecX.push_back(Xend);
-                vecY.push_back(Yorigin);
-                vecY.push_back(Yend);
-
-
-
-                double machine_epsilon = std::numeric_limits<double>::epsilon();
-                if(!fabs(origin-end) > machine_epsilon)
-                {
-                    cout << "The edge number " << edges[e] << " has lenght zero" << endl;
-                }
-
-                auto findOrigin = find(mesh.Cell2DVertices[c].begin(), mesh.Cell2DVertices[c].end(), origin);
-                if (findOrigin == mesh.Cell2DVertices[c].end())
-                {
-                    cerr << "Wrong mesh" << endl;
-                    return 2;
-                }
-
-                auto findEnd = find(mesh.Cell2DVertices[c].begin(), mesh.Cell2DVertices[c].end(), end);
-                if(findEnd == mesh.Cell2DVertices[c].end())
-                {
-                    cerr << "Wrong mesh" << endl;
-                    return 3;
-                }
-
-                unsigned int z=vecX.size();
-                double Area=0.0;
-                for(unsigned int i=0;i<z;i++)
-                {
-                    Area= Area+ 0.5*fabs(vecX[i]*vecY[i+1]-vecX[i+1]*vecY[i]);
-
-                }
-                if (Area<machine_epsilon)
-                    cout<<"la cella"<<" "<<c<<" "<<" tra le celle 2D ha area nulla"<<endl;
+                sum_x = sum_x + singularListVertices[j][d];
             }
 
+            if(d = 1)
+            {
+                sum_y = sum_y + singularListVertices[j][d];
+            }
 
-        }
-
-    }
-
-    return true;
-}
-
-
-// *****************************************************************************
-
-bool ImportCell0Ds(const string &filename,
-                   PolygonalMesh& mesh)
-{
-
-    ifstream file;
-    file.open(filename);
-
-    if(file.fail())
-        return false;
-
-    list<string> listLines;
-    string line;
-    while (getline(file,line))
-        listLines.push_back(line);
-
-    file.close();
-
-    listLines.pop_front();
-
-    mesh.NumberCell0D = listLines.size();
-
-    if (mesh.NumberCell0D == 0)
-    {
-        cerr << "There is no cell 0D" << endl;
-        return false;
-    }
-
-    mesh.Cell0DId.reserve(mesh.NumberCell0D);
-    mesh.Cell0DCoordinates.reserve(mesh.NumberCell0D);
-
-    for (const string& line : listLines)
-    {
-        istringstream converter(line);
-
-        char c;
-        unsigned int id;
-        unsigned int marker;
-        Vector2d coord;
-
-        converter >> id >> c >> marker >> c >> coord(0) >> c >> coord(1);
-
-        mesh.Cell0DId.push_back(id);
-        mesh.Cell0DCoordinates.push_back(coord);
-
-        if (marker != 0)
-        {
-            auto ret = mesh.Cell0DMarkers.insert({marker, {id}});
-            if(!ret.second)
-                (ret.first)->second.push_back(id);
-        }
-
-    }
-
-    file.close();
-
-    return true;
-
-}
-
-
-// *****************************************************************************
-
-
-bool ImportCell1Ds(const string &filename,
-                   PolygonalMesh& mesh)
-{
-
-    ifstream file;
-    file.open(filename);
-
-    if(file.fail())
-        return false;
-
-    list<string> listLines;
-    string line;
-    while (getline(file,line))
-        listLines.push_back(line);
-
-    listLines.pop_front();
-
-    mesh.NumberCell1D = listLines.size();
-
-    if (mesh.NumberCell1D == 0)
-    {
-        cerr << "There is no cell 1D" << endl;
-        return false;
-    }
-
-    mesh.Cell0DId.reserve(mesh.NumberCell1D);
-    mesh.Cell1DVertices.reserve(mesh.NumberCell1D);
-
-
-
-    for (const string& line : listLines)
-    {
-        istringstream converter(line);
-
-        char c;
-        unsigned int id;
-        unsigned int marker;
-        Vector2i vertices;
-
-        converter >> id >> c >> marker >> c >> vertices(0) >> c >> vertices(1);
-
-        mesh.Cell1DId.push_back(id);
-        mesh.Cell1DVertices.push_back(vertices);
-
-        if (marker != 0)
-        {
-            auto ret = mesh.Cell1DMarkers.insert({marker, {id}});
-            if(!ret.second)
-                (ret.first)->second.push_back(id);
+            if(d = 2)
+            {
+                sum_z = sum_z + singularListVertices[j][d];
+            }
         }
     }
 
-    file.close();
+    double median_x = sum_x/numVertices;
+    double median_y = sum_y/numVertices;
+    double median_z = sum_z/numVertices;
 
-    return true;
+    centroid << median_x, median_y, median_z;
+    return centroid;
 }
 
-
-// *****************************************************************************
-
-
-bool ImportCell2Ds(const string &filename,
-                   PolygonalMesh &mesh)
+//****************************************************************************************************************
+void importFracturesList(const string& filepath,
+                         Fractures &fractures)
 {
-
-    ifstream file;
-    file.open(filename);
+    ifstream file(filepath);
 
     if(file.fail())
-        return false;
+        throw runtime_error("cannot open file");
 
-    list<string> listLines;
     string line;
-    while (getline(file,line))
-        listLines.push_back(line);
+    getline(file, line); // header
 
-    listLines.pop_front();
+    getline(file, line);
+    unsigned int numFractures;
+    istringstream convertNF(line);
+    convertNF >> numFractures;
 
-    mesh.NumberCell2D = listLines.size();
-
-    if (mesh.NumberCell2D == 0)
+    fractures.listVertices.resize(numFractures);
+    for (unsigned int c = 0; c < numFractures; ++c)
     {
-        cerr << "There is no cell 2D" << endl;
-        return false;
-    }
+        getline(file, line); // header
 
-    mesh.Cell2DId.reserve(mesh.NumberCell2D);
-    mesh.Cell2DVertices.reserve(mesh.NumberCell2D);
-    mesh.Cell2DEdges.reserve(mesh.NumberCell2D);
-
-    for (const string& line : listLines)
-    {
-        istringstream converter(line);
-
-        char c;
         unsigned int id;
-        vector<unsigned int> vertices;
-        vector<unsigned int> edges;
-        unsigned int marker;
         unsigned int numVertices;
-        unsigned int numEdges;
+        char b;
+        getline(file,line);
 
-        converter >> id >> c >> marker >> c >> numVertices;
-        for(unsigned int i = 0; i < numVertices; i++)
-            converter >> vertices[i] >> c;
-        for(unsigned int i = 0; i < numEdges-1; i++)
-            converter >> edges[i] >> c;
-        converter >> edges[numEdges-1];
+        istringstream convertNV(line);
+        convertNV >> id >> b >> numVertices;
 
-        mesh.Cell2DId.push_back(id);
-        mesh.Cell2DVertices.push_back(vertices);
-        mesh.Cell2DEdges.push_back(edges);
+        fractures.listVertices[c].resize(numVertices);
 
-        if (marker != 0)
+        getline(file, line); // header
+        VectorXd x_coordinates;
+        x_coordinates.resize(numVertices);
+        VectorXd y_coordinates;
+        y_coordinates.resize(numVertices);
+        VectorXd z_coordinates;
+        z_coordinates.resize(numVertices);
+
+        getline(file,line);
+        istringstream convertX(line);
+        char p;
+        for (int i = 0; i < numVertices; ++i)
         {
-            auto ret = mesh.Cell2DMarkers.insert({marker, {id}});
-            if(!ret.second)
-                (ret.first)->second.push_back(id);
+            if(i != numVertices - 1)
+            {
+                convertX >> x_coordinates[i] >> p;
+            }
+            else
+            {
+                convertX >> x_coordinates[i];
+            }
+        }
+
+        getline(file,line);
+        istringstream convertY(line);
+        char s;
+        for (int i = 0; i < numVertices; ++i)
+        {
+            if(i != numVertices - 1)
+            {
+                convertY >> y_coordinates[i] >> s;
+            }
+            else
+            {
+                convertY >> y_coordinates[i];
+            }
+        }
+
+        getline(file,line);
+        istringstream convertZ(line);
+        char a;
+        for (int i = 0; i < numVertices; ++i)
+        {
+            if(i != numVertices - 1)
+            {
+                convertZ >> z_coordinates[i] >> a;
+            }
+            else
+            {
+                convertZ >> z_coordinates[i];
+            }
+        }
+
+        fractures.listVertices[c].resize(numVertices);
+        for (int v = 0; v < numVertices; ++v)
+        {
+            fractures.listVertices[c][v].resize(3);
+            fractures.listVertices[c][v][0] = x_coordinates[v];
+            fractures.listVertices[c][v][1] = y_coordinates[v];
+            fractures.listVertices[c][v][2] = z_coordinates[v];
         }
 
     }
     file.close();
-    return true;
-
+}
+//****************************************************************************************************************
 }
 
 
@@ -336,4 +200,7 @@ bool ImportCell2Ds(const string &filename,
 
 
 
-}
+
+
+
+
