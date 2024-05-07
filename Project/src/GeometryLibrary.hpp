@@ -8,13 +8,11 @@ using namespace Eigen;
 
 namespace GeometryLibrary {
 
-struct Fractures {
-    vector<vector<vector<double>>> listVertices;
-
-    Fractures() = default;
-    Fractures(const vector<vector<vector<double>>>& listVertices) :
-        listVertices(listVertices)
-    {}
+// Struct per rappresentare una singola frattura
+struct Fracture {
+    int id;
+    int numVertices;
+    MatrixXd vertices;
 };
 
 struct Traces {
@@ -31,15 +29,14 @@ struct Traces {
     {}
 };
 
+// Funzione per leggere il DFN
+vector<Fracture> readDFN(const string& filename);
 
-void importFracturesList(const string& filepath,
-                        Fractures& fractures);
 
+Vector3d computeCentroid(Fracture fracture);
 
-Vector3d computeCentroid(vector<vector<double>> singularListVertices);
-
-bool testCircumference(vector<vector<double>> fracture1,
-                       vector<vector<double>> fracture2);
+bool testCircumference(Fracture fracture1,
+                       Fracture fracture2);
 
 
 }
