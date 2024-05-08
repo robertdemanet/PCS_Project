@@ -91,10 +91,10 @@ vector<Fracture> readDFN(const string &filename) {
 
         getline(file,line); // header of fractureID and numVertices
         getline(file,line); // line of fractureID and numVertices
-
         char b;
         istringstream convertIDandVERT(line);
         convertIDandVERT >> fracture.id >> b >> fracture.numVertices;
+
 
         getline(file,line); // header of vertices
         for (int j = 0; j < 3; ++j) {
