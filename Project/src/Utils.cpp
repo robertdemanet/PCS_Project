@@ -1,8 +1,5 @@
 #include "GeometryLibrary.hpp"
 
-#include <Eigen/Eigen>
-#include <Eigen/Geometry>
-#include <Eigen/Dense>
 #include <fstream>
 #include <vector>
 
@@ -16,21 +13,47 @@ vector<Trace> computeTraces(const string& filename,
 {
     for (int i = 0; i < fractures.size(); ++i) {
         for (int j = i + 1; j < fractures.size(); ++j) {
-            if (testCircumference(fractures[i], fractures[j]))
+            if (!testCircumference(fractures[i], fractures[j]))
             {
-                Vector3d u1 = fractures[i].vertices.col(2) - fractures[i].vertices.col(0);
-                Vector3d v1 = fractures[i].vertices.col(1) - fractures[i].vertices.col(0);
-                Vector3d norm1 = (u1.cross(v1)).normalized();
-                Vector3d u2 = fractures[j].vertices.col(2) - fractures[j].vertices.col(0);
-                Vector3d v2 = fractures[j].vertices.col(1) - fractures[j].vertices.col(0);
-                Vector3d norm2 = (u2.cross(v2)).normalized();
-                // Vector3d norm1 = ((fractures[i].vertices.col(2) - fractures[i].vertices.col(0)).cross(fractures[i].vertices.col(1) - fractures[i].vertices.col(0))).normalized();
-                // Vector3d norm2 = ((fractures[j].vertices.col(2) - fractures[j].vertices.col(0)).cross(fractures[j].vertices.col(1) - fractures[j].vertices.col(0))).normalized();
-                Vector3d tangent = norm1.cross(norm2);
-                Matrix3d A;
-                A << norm1, norm2, tangent;
-                Vector3d b;
+                break;
             }
+
+            // Calcolo i vettori che generano la normale per la prima frattura:
+
+            Vector3d u1 = fractures[i].vertices.col(2) - fractures[i].vertices.col(0);
+            Vector3d v1 = fractures[i].vertices.col(1) - fractures[i].vertices.col(0);
+            Vector3d norm1 = (u1.cross(v1)).normalized();
+
+            // Calcolo i vettori che generano la normale per la seconda frattura:
+
+            Vector3d u2 = fractures[j].vertices.col(2) - fractures[j].vertices.col(0);
+            Vector3d v2 = fractures[j].vertices.col(1) - fractures[j].vertices.col(0);
+            Vector3d norm2 = (u2.cross(v2)).normalized();
+
+            // Calcolo la direzione della retta di intersezione:
+
+            Vector3d tangent = norm1.cross(norm2);
+
+            // Definisco il sistema lineare:
+
+            Matrix3d A;
+            A << norm1, norm2, tangent;
+
+            if (!A.determinant() != 0)
+            {
+                break;
+            }
+
+
+            Vector3d b;
+            double d1 = fractures[i].vertices.col(0).dot(norm1);
+            double d2 = fractures[j].vertices.col(0).dot(norm2);
+            b << d1, d2, 0;
+
+            // Risolvo il sistema lineare:
+
+            Vector3d intersection_point = A.fullPivLu().solve(b); // utilizziamo la fattorizzazione PALU perché è la più efficiente, con un costo di (n^3)/3 operazioni
+
 
         }
 
