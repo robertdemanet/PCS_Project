@@ -1,7 +1,9 @@
 #pragma once
 
 #include <iostream>
-#include "Eigen/Eigen"
+#include <Eigen/Geometry>
+#include <Eigen/Eigen>
+#include <Eigen/Dense>
 
 using namespace std;
 using namespace Eigen;
@@ -15,18 +17,13 @@ struct Fracture {
     MatrixXd vertices;
 };
 
-struct Traces {
-    // Matrice di coordinate dei punti di inizio e fine delle tracce
-    MatrixXd PointsCoordinates;
-    // Vettore di coppie di indici delle fratture che definiscono le tracce
-    std::vector<std::pair<unsigned int, unsigned int>> FractureIndices;
-
-    Traces() = default;
-    Traces(const MatrixXd& PointsCoordinates,
-           const vector<pair<unsigned int, unsigned int>>& FractureIndices):
-        PointsCoordinates(PointsCoordinates),
-        FractureIndices(FractureIndices)
-    {}
+// Struct per rappresentare una singola traccia
+struct Trace {
+    int id;
+    int Fracture1ID;
+    int Fracture2ID;
+    Vector3d firstPoint;
+    Vector3d finalPoint;
 };
 
 // Funzione per leggere il DFN
@@ -37,6 +34,9 @@ Vector3d computeCentroid(Fracture fracture);
 
 bool testCircumference(Fracture fracture1,
                        Fracture fracture2);
+
+vector<Trace> computeTraces(const string& filename,
+                            vector<Fracture>& fractures);
 
 
 }

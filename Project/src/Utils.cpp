@@ -1,9 +1,55 @@
 #include "GeometryLibrary.hpp"
 
+#include <Eigen/Eigen>
+#include <Eigen/Geometry>
+#include <Eigen/Dense>
 #include <fstream>
 #include <vector>
 
+using namespace std;
+using namespace Eigen;
+
 namespace GeometryLibrary{
+//****************************************************************************************************************
+vector<Trace> computeTraces(const string& filename,
+                            vector<Fracture>& fractures)
+{
+    for (int i = 0; i < fractures.size(); ++i) {
+        for (int j = i + 1; j < fractures.size(); ++j) {
+            if (testCircumference(fractures[i], fractures[j]))
+            {
+                Vector3d u1 = fractures[i].vertices.col(2) - fractures[i].vertices.col(0);
+                Vector3d v1 = fractures[i].vertices.col(1) - fractures[i].vertices.col(0);
+                Vector3d norm1 = (u1.cross(v1)).normalized();
+                Vector3d u2 = fractures[j].vertices.col(2) - fractures[j].vertices.col(0);
+                Vector3d v2 = fractures[j].vertices.col(1) - fractures[j].vertices.col(0);
+                Vector3d norm2 = (u2.cross(v2)).normalized();
+                // Vector3d norm1 = ((fractures[i].vertices.col(2) - fractures[i].vertices.col(0)).cross(fractures[i].vertices.col(1) - fractures[i].vertices.col(0))).normalized();
+                // Vector3d norm2 = ((fractures[j].vertices.col(2) - fractures[j].vertices.col(0)).cross(fractures[j].vertices.col(1) - fractures[j].vertices.col(0))).normalized();
+                Vector3d tangent = norm1.cross(norm2);
+                Matrix3d A;
+                A << norm1, norm2, tangent;
+                Vector3d b;
+            }
+
+        }
+
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 //****************************************************************************************************************
 bool testCircumference(Fracture fracture1,
                        Fracture fracture2)
@@ -12,10 +58,8 @@ bool testCircumference(Fracture fracture1,
     Vector3d centroid2 = computeCentroid(fracture2);
     double radius1 = 0.00;
     double radius2 = 0.00;
-    vector<double> distances1;
-    vector<double> distances2;
 
-    for (unsigned int v = 0; v < fracture1.numVertices; ++v)
+    for (int v = 0; v < fracture1.numVertices; ++v)
     {
         Vector3d vertex1(fracture1.vertices(0,v), fracture1.vertices(1,v), fracture1.vertices(2,v));
         Vector3d diff1 = centroid1 - vertex1;
@@ -24,7 +68,7 @@ bool testCircumference(Fracture fracture1,
     }
 
 
-    for (unsigned int v = 0; v < fracture2.numVertices; ++v)
+    for (int v = 0; v < fracture2.numVertices; ++v)
     {
         Vector3d vertex2(fracture2.vertices(0,v), fracture2.vertices(1,v), fracture2.vertices(2,v));
         Vector3d diff2 = centroid2 - vertex2;
@@ -53,7 +97,7 @@ Vector3d computeCentroid(Fracture fracture)
     double sum_y = 0;
     double sum_z = 0;
     int n_vert = fracture.numVertices;
-    for (unsigned int j = 0; j < n_vert; ++j)
+    for (int j = 0; j < n_vert; ++j)
     {
         sum_x = sum_x + fracture.vertices(0,j);
         sum_y = sum_y + fracture.vertices(1,j);
