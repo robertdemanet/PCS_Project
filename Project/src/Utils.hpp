@@ -1,1 +1,106 @@
+#ifndef __TESTUTILS_H
+#define __TESTUTILS_H
 
+#include <gtest/gtest.h>
+#include <iostream>
+#include <Eigen/Geometry>
+#include <Eigen/Eigen>
+#include <Eigen/Dense>
+#include "GeometryLibrary.hpp"
+
+using namespace std;
+using namespace Eigen;
+
+namespace GeometryLibrary{
+
+TEST(DFNTEST,readDFNTest)
+{
+    // testo il numero di fratture lette
+    vector<Fracture> fractures = readDFN("FR3_data.txt");
+    EXPECT_EQ(fractures.size(),3);
+
+    // testo i dati inerenti la prima frattura:id,num di vertici e matrice di coordinate
+    EXPECT_EQ(fractures[0].id,0);
+    EXPECT_EQ(fractures[0].numVertices,4);
+    MatrixXd Matrix1=MatrixXd::Zero(3,4);
+    Matrix1<<0.0000000000000000e+00,1.0000000000000000e+00,1.0000000000000000e+00,0.0000000000000000e+00,
+             0.0000000000000000e+00,0.0000000000000000e+00,1.0000000000000000e+00,1.0000000000000000e+00,
+             0.0000000000000000e+00,0.0000000000000000e+00,0.0000000000000000e+00,0.0000000000000000e+00;
+    EXPECT_EQ(fractures[0].vertices,Matrix1);
+
+
+    // testo i dati inerenti la seconda frattura:id,num di vertici e matrice di coordinate
+    EXPECT_EQ(fractures[1].id,1);
+    EXPECT_EQ(fractures[1].numVertices,4);
+    MatrixXd Matrix2=MatrixXd::Zero(3,4);
+    Matrix2<<8.0000000000000004e-01,8.0000000000000004e-01,8.0000000000000004e-01,8.0000000000000004e-01,
+             0.0000000000000000e+00,0.0000000000000000e+00,1.0000000000000000e+00,1.0000000000000000e+00,
+            -1.0000000000000001e-01,2.9999999999999999e-01,2.9999999999999999e-01,-1.0000000000000001e-01;
+    EXPECT_EQ(fractures[1].vertices,Matrix2);
+
+    // testo i dati inerenti la terza frattura:id,num di vertici e matrice di coordinate
+    EXPECT_EQ(fractures[2].id,2);
+    EXPECT_EQ(fractures[2].numVertices,4);
+    MatrixXd Matrix3=MatrixXd::Zero(3,4);
+    Matrix2<<-2.3777799999999999e-01,3.1618370000000001e-01,3.1618370000000001e-01,-2.3777799999999999e-01,
+              5.0000000000000000e-01,5.0000000000000000e-01,5.0000000000000000e-01,5.0000000000000000e-01,
+             -3.4444000000000002e-01,-3.4444000000000002e-01,4.5283889999999999e-01,4.5283889999999999e-01;
+    EXPECT_EQ(fractures[2].vertices,Matrix3);
+}
+
+TEST(DFNTEST,TestComputeCentroid)
+{
+    // testo prendendo come frattura di esempio la prima presente nel file FR3_data
+    Fracture fracture;
+    fracture.numVertices=4;
+    MatrixXd Matrix=MatrixXd::Zero(3,4);
+    Matrix<<0.0000000000000000e+00,1.0000000000000000e+00,1.0000000000000000e+00,0.0000000000000000e+00,
+            0.0000000000000000e+00,0.0000000000000000e+00,1.0000000000000000e+00,1.0000000000000000e+00,
+            0.0000000000000000e+00,0.0000000000000000e+00,0.0000000000000000e+00,0.0000000000000000e+00;
+
+    fracture.vertices=Matrix;
+    Vector3d centroid=computeCentroid(fracture);
+    Vector3d result;
+    result<<0.5000000000000000e+00,0.5000000000000000e+00,0.0000000000000000e+00;
+    EXPECT_EQ(centroid,result);
+}
+
+TEST(DFNTEST,TestCircumference)
+{
+    // per testare prendo la rpima e la seconda frattura del file sotto
+    vector<Fracture> fractures = readDFN("FR3_data.txt");
+    bool var=testCircumference(fractures[0],fractures[1]);
+    EXPECT_EQ(var,true);
+
+    bool var1=testCircumference(fractures[1],fractures[2]);
+    EXPECT_EQ(var1,true);
+
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+
+
+
+
+
+
+
+
+
+#endif
