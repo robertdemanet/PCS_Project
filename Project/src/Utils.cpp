@@ -9,9 +9,7 @@ using namespace Eigen;
 
 namespace GeometryLibrary{
 //****************************************************************************************************************
-vector<Trace> computeTraces (vector<struct Fracture>& fractures,
-                            vector<Vector3d>& vertex_Inters_f1,
-                            vector<Vector3d>& vertex_Inters_f2)
+vector<Trace> computeTraces (vector<struct Fracture>& fractures)
 {
     vector<Trace> vecTrace;
     Trace Trace;
@@ -60,16 +58,15 @@ vector<Trace> computeTraces (vector<struct Fracture>& fractures,
 
             Vector3d intersection_point = A.fullPivLu().solve(b);// utilizziamo la fattorizzazione PALU perché è la più efficiente, con un costo di (n^3)/3 operazioni
             Vector3d otherPoint= intersection_point+0.1*tangent;
-            vector<Vector3d> vertex_Inters_f1; // questi due vettori mi servono per tenere traccia del fatto che i vertici delle tracce
-            vector<Vector3d> vertex_Inters_f2; // appartengono alla prima frattura o alla seconda o a entrambe
-            vector<Vector3d > trace_vertexes =TraceVertexes(intersection_point,otherPoint,fractures[i],fractures[j],
-                                                             vertex_Inters_f1,
-                                                             vertex_Inters_f2);
+            vector<Vector3d > vertex_Inters =TraceVertexes(intersection_point,otherPoint,fractures[i],fractures[j]);
+            sort(vertex_Inters.begin(),vertex_Inters.end(),comparePoints);
+
+
             Trace.id=countID;
             Trace.Fracture1ID=fractures[i].id;
             Trace.Fracture2ID=fractures[j].id;
-            Trace.firstPoint=trace_vertexes[0];
-            Trace.finalPoint=trace_vertexes[1];
+            Trace.firstPoint=vertex_Inters[0];
+            Trace.finalPoint=vertex_Inters[1];
             vecTrace.push_back(Trace);
 
 
@@ -86,14 +83,13 @@ vector<Trace> computeTraces (vector<struct Fracture>& fractures,
 
 //****************************************************************************************************************
 
-vector<Vector3d> TraceVertexes(Vector3d& Point1, // nel selezionare i vertici della traccia voglio portarmi dietro anche l'informazione
-                               Vector3d& Point2, // sui quattro vertici calcolati mediante l'intersezione per poi usarli per vedere tips
+vector<Vector3d> TraceVertexes(Vector3d& Point1,
+                               Vector3d& Point2,
                                Fracture& fracture1,
-                               Fracture& fracture2,
-                               vector<Vector3d>& vertex_Inters_f1,
-                               vector<Vector3d>& vertex_Inters_f2)
+                               Fracture& fracture2)
 {
-    vector<Vector3d> vertex_Inters;
+    vector<Vector3d> vertex_Inters; // nelle prime due posizioni ho i punti di intersezione che trovo con la prima frattura
+                                    // nelle altre due ho quelli che trovo con la frattura 2
     for(int i=0;i<fracture1.numVertices;++i)
     {
         MatrixXd A;
@@ -101,20 +97,29 @@ vector<Vector3d> TraceVertexes(Vector3d& Point1, // nel selezionare i vertici de
         Vector3d d=fracture1.vertices.col(i+1 % fracture1.numVertices)-fracture1.vertices.col(i );
         A<< (Point2-Point1);
         A<<d;
-       // if(! (A.determinant() !=0)) //La matrice A è 3x2 non si può calcolare il determinanate.Serve un altro metodo
-        //{
-      //      break;
-     //   }
-        Vector2d solution=A.fullPivLu().solve(b);
-        Vector3d intersectionPoint=Point1+solution[0]*(Point2-Point1);//nel fare Point2-Point1 devo normalizzare?
-        Vector3d u=fracture1.vertices.col(i+1% fracture1.numVertices)-fracture1.vertices.col(i );
-        Vector3d v=Point1-fracture1.vertices.col(i );
-        Vector3d z=Point1-fracture1.vertices.col(i+1% fracture1.numVertices);
-        if(!(u.dot(v)>0 && -u.dot(z)<0)){ // verifico che il punto trovato sia all'interno del lato della frattura. Come?Vedere appunti Vicini e tablet
+        Matrix2d A1;
+        A1<<A.row(0),A.row(1);
+        Matrix2d A2;
+        A2<<A.row(0),A.row(2);
+        Matrix2d A3;
+        A3<<A.row(1),A.row(2);
+        if( !(A1.determinant()!=0 || A2.determinant()!=0 || A3.determinant()!=0))
+        {
             break;
         }
+
+
+
+        Vector2d solution=A.fullPivLu().solve(b);
+        Vector3d intersectionPoint=Point1+solution[0]*(Point2-Point1);
+        // basta controllare che beta stia tra 0 e 1
+        if( !(solution[1]>=0 && solution[1]<=1))
+        {
+            break;
+        }
+
         vertex_Inters.push_back(intersectionPoint);
-        vertex_Inters_f1.push_back(intersectionPoint);
+
 
 
     }
@@ -126,31 +131,35 @@ vector<Vector3d> TraceVertexes(Vector3d& Point1, // nel selezionare i vertici de
         Vector3d d=fracture2.vertices.col(i % fracture2.numVertices)-fracture2.vertices.col(i+1 % fracture2.numVertices);
         A<< (Point1-Point2);
         A<<d;
-        if(! (A.determinant() !=0))
+        Matrix2d A1;
+        A1<<A.row(0),A.row(1);
+        Matrix2d A2;
+        A2<<A.row(0),A.row(2);
+        Matrix2d A3;
+        A3<<A.row(1),A.row(2);
+        if( !(A1.determinant()!=0 || A2.determinant()!=0 || A3.determinant()!=0))
         {
             break;
         }
-        Vector3d solution=A.fullPivLu().solve(b);
+
+
+
+        Vector2d solution=A.fullPivLu().solve(b);
         Vector3d intersectionPoint=Point1+solution[0]*(Point2-Point1);
-        Vector3d u=fracture2.vertices.col(i+1% fracture2.numVertices)-fracture2.vertices.col(i );
-        Vector3d v=Point1-fracture2.vertices.col(i );
-        Vector3d z=Point1-fracture2.vertices.col(i+1% fracture2.numVertices);
-        if(!(u.dot(v)>0 && -u.dot(z)<0)){ // verifico che il punto trovato sia all'interno del lato della frattura. Come?Vedere appunti Vicini e tablet
+        // basta controllare che beta stia tra 0 e 1
+        if( !(solution[1]>=0 && solution[1]<=1))
+        {
             break;
         }
         vertex_Inters.push_back(intersectionPoint);
-        vertex_Inters_f2.push_back(intersectionPoint);
+
 
     }
 
 
-    sort(vertex_Inters.begin(),vertex_Inters.end(),comparePoints);
 
-    vector<Vector3d> TraceVertexes;
-    TraceVertexes.push_back(vertex_Inters[1]);
-    TraceVertexes.push_back(vertex_Inters[2]);
 
-    return TraceVertexes;
+    return vertex_Inters;
 }
 
 //****************************************************************************************************************
@@ -161,9 +170,7 @@ bool comparePoints(const Vector3d& v1,const Vector3d& v2){
 }
 //****************************************************************************************************************
 vector<vector<Support>> writeResult(const string& outputFilePath,
-                            vector<Trace>& Traces,
-                            vector<Vector3d>& vertex_Inters_f1,
-                            vector<Vector3d>& vertex_Inters_f2)
+                                    vector<Trace>& Traces,vector<Vector3d> vertex_Inters)
 {
     vector<vector<Support>> Return;
     struct Support S;
@@ -196,8 +203,8 @@ vector<vector<Support>> writeResult(const string& outputFilePath,
                                               pow(Traces[i].finalPoint[1]-Traces[i].firstPoint[1],2)+
                                                 pow(Traces[i].finalPoint[2]-Traces[i].firstPoint[2],2);
         //con questa condizione verifico se i vertici della traccia appartengono entrambi alla frattura1
-        if( ((Traces[i].firstPoint.isApprox(vertex_Inters_f1[0])) || (Traces[i].firstPoint.isApprox(vertex_Inters_f1[1]))) &&
-            ((Traces[i].finalPoint.isApprox(vertex_Inters_f1[0])) || (Traces[i].finalPoint.isApprox(vertex_Inters_f1[1])))  ){
+        if( ((Traces[i].firstPoint.isApprox(vertex_Inters[0])) || (Traces[i].firstPoint.isApprox(vertex_Inters[1]))) &&
+            ((Traces[i].finalPoint.isApprox(vertex_Inters[0])) || (Traces[i].finalPoint.isApprox(vertex_Inters[1])))  ){
 
             S.Tips=false;
 
@@ -215,8 +222,8 @@ vector<vector<Support>> writeResult(const string& outputFilePath,
 
         Return[Traces[i].Fracture1ID].push_back(S);
 
-        if( ((Traces[i].firstPoint.isApprox(vertex_Inters_f2[0])) || (Traces[i].firstPoint.isApprox(vertex_Inters_f2[1]))) &&
-            ((Traces[i].finalPoint.isApprox(vertex_Inters_f2[0])) || (Traces[i].finalPoint.isApprox(vertex_Inters_f2[1])))  ){
+        if( ((Traces[i].firstPoint.isApprox(vertex_Inters[2])) || (Traces[i].firstPoint.isApprox(vertex_Inters[3]))) &&
+            ((Traces[i].finalPoint.isApprox(vertex_Inters[2])) || (Traces[i].finalPoint.isApprox(vertex_Inters[3])))  ){
 
             S.Tips=false;
 

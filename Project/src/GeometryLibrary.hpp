@@ -42,17 +42,12 @@ Vector3d computeCentroid(Fracture& fracture);
 bool testCircumference(Fracture& fracture1,
                        Fracture& fracture2);
 
-vector<Trace> computeTraces(vector<Fracture>& fractures,
-                            vector<Vector3d>& vertex_Inters_f1,
-                            vector<Vector3d>& vertex_Inters_f2);
+vector<Trace> computeTraces(vector<Fracture>& fractures);
 
 vector<Vector3d> TraceVertexes(Vector3d& Point1,
                                Vector3d& Point2,
                                Fracture& fracture1,
-                               Fracture& fracture2,
-                               vector<Vector3d>& vertex_Inters_f1,
-                               vector<Vector3d>& vertex_Inters_f2);
-
+                               Fracture& fracture2);
 
 bool comparePoints(const Vector3d& v1,const Vector3d& v2);
 bool compareLenght(const Support& Support1,const Support& Support2);
@@ -60,8 +55,7 @@ bool compareLenght(const Support& Support1,const Support& Support2);
 
 vector<vector<Support>> writeResult(const string& outputFilePath, // le posizioni del vector più esterno corrispondono all'id della frattura
                             vector<Trace>& Traces,                // per ogni frattura accedo al vector di struct Support e poi alla singola
-                            vector<Vector3d>& vertex_Inters_f1,   // Support
-                            vector<Vector3d>& vertex_Inters_f2);
+                                    vector<Vector3d>& vertex_Inters);   // Support
 
 bool writeTracesForFracture(const string& outputFilePath,
                             vector<vector<Support>>& FractureTraces);
