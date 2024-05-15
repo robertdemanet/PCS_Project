@@ -166,7 +166,6 @@ vector<vector<Support>> writeResult(const string& outputFilePath,
                             vector<Vector3d>& vertex_Inters_f2)
 {
     vector<vector<Support>> Return;
-    vector<Support> Support;
     struct Support S;
     ofstream file;
     file.open(outputFilePath);
@@ -208,8 +207,13 @@ vector<vector<Support>> writeResult(const string& outputFilePath,
             S.Tips=true;
         }
 
-        Support.push_back(S);
-        Return[Traces[i].Fracture1ID]=Support;
+
+
+
+
+
+
+        Return[Traces[i].Fracture1ID].push_back(S);
 
         if( ((Traces[i].firstPoint.isApprox(vertex_Inters_f2[0])) || (Traces[i].firstPoint.isApprox(vertex_Inters_f2[1]))) &&
             ((Traces[i].finalPoint.isApprox(vertex_Inters_f2[0])) || (Traces[i].finalPoint.isApprox(vertex_Inters_f2[1])))  ){
@@ -223,8 +227,8 @@ vector<vector<Support>> writeResult(const string& outputFilePath,
         }
 
 
-        Support.push_back(S);
-        Return[Traces[i].Fracture2ID]=Support;
+
+        Return[Traces[i].Fracture2ID].push_back(S);
 
 
 
