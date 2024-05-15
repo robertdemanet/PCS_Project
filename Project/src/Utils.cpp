@@ -252,6 +252,8 @@ vector<vector<Support>> writeResult(const string& outputFilePath,
 
     }
 
+    return Return;
+
 }
 //****************************************************************************************************************
 bool compareLenght(const Support& Support1,const Support& Support2)
