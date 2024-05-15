@@ -59,8 +59,8 @@ bool compareLenght(const Support& Support1,const Support& Support2);
 
 
 vector<vector<Support>> writeResult(const string& outputFilePath, // le posizioni del vector più esterno corrispondono all'id della frattura
-                            vector<Trace>& Traces,               //per ogni frattura accedo al vector di struct Support e poi alla singola
-                            vector<Vector3d>& vertex_Inters_f1,  // Support
+                            vector<Trace>& Traces,                // per ogni frattura accedo al vector di struct Support e poi alla singola
+                            vector<Vector3d>& vertex_Inters_f1,   // Support
                             vector<Vector3d>& vertex_Inters_f2);
 
 bool writeTracesForFracture(const string& outputFilePath,

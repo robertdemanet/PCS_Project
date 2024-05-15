@@ -57,6 +57,7 @@ vector<Trace> computeTraces (vector<struct Fracture>& fractures,
 
             // Risolvo il sistema lineare:
 
+
             Vector3d intersection_point = A.fullPivLu().solve(b);// utilizziamo la fattorizzazione PALU perché è la più efficiente, con un costo di (n^3)/3 operazioni
             Vector3d otherPoint= intersection_point+0.1*tangent;
             vector<Vector3d> vertex_Inters_f1; // questi due vettori mi servono per tenere traccia del fatto che i vertici delle tracce
@@ -70,6 +71,7 @@ vector<Trace> computeTraces (vector<struct Fracture>& fractures,
             Trace.firstPoint=trace_vertexes[0];
             Trace.finalPoint=trace_vertexes[1];
             vecTrace.push_back(Trace);
+
 
 
 
@@ -287,10 +289,19 @@ bool writeTracesForFracture(const string& outputFilePath,
 bool testCircumference(Fracture& fracture1,
                        Fracture& fracture2)
 {
+
+    // Definisco i centroidi per ciascuna frattura:
+
     Vector3d centroid1 = computeCentroid(fracture1);
     Vector3d centroid2 = computeCentroid(fracture2);
+
+    // Inizializzo i raggi delle due circonferenze a 0:
+
     double radius1 = 0.00;
     double radius2 = 0.00;
+
+    // Itero sui vertici della prima frattura, aggiornando ad ogni iterata
+    // il valore massimo assunto dalla distanza del centroide da un vertice
 
     for (int v = 0; v < fracture1.numVertices; ++v)
     {
@@ -300,6 +311,8 @@ bool testCircumference(Fracture& fracture1,
         radius1 = std::max(radius1, distance1);
     }
 
+    // Itero sui vertici della prima frattura, aggiornando ad ogni iterata
+    // il valore massimo assunto dalla distanza del centroide da un vertice
 
     for (int v = 0; v < fracture2.numVertices; ++v)
     {
@@ -309,8 +322,12 @@ bool testCircumference(Fracture& fracture1,
         radius2 = std::max(radius2, distance2);
     }
 
+    // Calcolo la distanza nella spazio 3D dei due centroidi:
+
     Vector3d diff_centroids = centroid1 - centroid2;
     double distance_centroids = diff_centroids.norm();
+
+    // E verifico se essa è maggiore della somma dei due raggi:
 
     if(distance_centroids > (radius1 + radius2))
     {
@@ -325,10 +342,19 @@ bool testCircumference(Fracture& fracture1,
 //****************************************************************************************************************
 Vector3d computeCentroid(Fracture& fracture)
 {
+
+    // Definisco il vettore (punto 3D) centroide:
+
     Vector3d centroid;
+
+    // Inizializzo le somme delle coordinate x/y/z a zero:
+
     double sum_x = 0;
     double sum_y = 0;
     double sum_z = 0;
+
+    // Itero sul numero di vertici sommando ogni volta su ciascuna coordinata:
+
     int n_vert = fracture.numVertices;
     for (int j = 0; j < n_vert; ++j)
     {
@@ -336,6 +362,8 @@ Vector3d computeCentroid(Fracture& fracture)
         sum_y = sum_y + fracture.vertices(1,j);
         sum_z = sum_z + fracture.vertices(2,j);
     }
+
+    // Calcolo i valori medi assunti da ciascuna coordinata e li inserisco nel vettore centroide:
 
     double median_x = sum_x/n_vert;
     double median_y = sum_y/n_vert;
