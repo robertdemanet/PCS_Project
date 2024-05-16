@@ -97,9 +97,10 @@ vector<Vector3d> TraceVertexes(Vector3d& Point1,
         MatrixXd A;
         Vector3d b=fracture1.vertices.col(i )-Point1;
         Vector3d d=fracture1.vertices.col(i+1 % fracture1.numVertices)-fracture1.vertices.col(i );
-        A<< (Point2-Point1);
+        Vector3d t= Point2-Point1;
+        A<< t;
         A<<d;
-        Matrix2d A1;
+        /*Matrix2d A1;
         A1<<A.row(0),A.row(1);
         Matrix2d A2;
         A2<<A.row(0),A.row(2);
@@ -108,9 +109,22 @@ vector<Vector3d> TraceVertexes(Vector3d& Point1,
         if( !(A1.determinant()!=0 || A2.determinant()!=0 || A3.determinant()!=0))
         {
             break;
+        }*/
+
+        //controllo che le rette non siano parallele
+        Vector3d control=t.cross(d);
+        if(!(control[0]!=0 && control[1]!=0 && control[2]!=0))
+        {
+            break;
         }
 
+<<<<<<< Updated upstream
         Vector2d solution=A.fullPivLu().solve(b);
+=======
+
+
+        Vector2d solution=A.householderQr().solve(b);
+>>>>>>> Stashed changes
         Vector3d intersectionPoint=Point1+solution[0]*(Point2-Point1);
         // basta controllare che beta stia tra 0 e 1
         if( !(solution[1]>=0 && solution[1]<=1))
@@ -126,9 +140,10 @@ vector<Vector3d> TraceVertexes(Vector3d& Point1,
         MatrixXd A;
         Vector3d b= Point1-fracture2.vertices.col(i % fracture2.numVertices);
         Vector3d d=fracture2.vertices.col(i % fracture2.numVertices)-fracture2.vertices.col(i+1 % fracture2.numVertices);
-        A<< (Point1-Point2);
+        Vector3d t= Point2-Point1;
+        A<< t;
         A<<d;
-        Matrix2d A1;
+       /* Matrix2d A1;
         A1<<A.row(0),A.row(1);
         Matrix2d A2;
         A2<<A.row(0),A.row(2);
@@ -137,11 +152,18 @@ vector<Vector3d> TraceVertexes(Vector3d& Point1,
         if( !(A1.determinant()!=0 || A2.determinant()!=0 || A3.determinant()!=0))
         {
             break;
+        }*/
+
+        //controllo che le rette non siano parallele
+        Vector3d control=t.cross(d);
+        if(!(control[0]!=0 && control[1]!=0 && control[2]!=0))
+        {
+            break;
         }
 
 
 
-        Vector2d solution=A.fullPivLu().solve(b);
+        Vector2d solution=A.householderQr().solve(b);
         Vector3d intersectionPoint=Point1+solution[0]*(Point2-Point1);
         // basta controllare che beta stia tra 0 e 1
         if( !(solution[1]>=0 && solution[1]<=1))

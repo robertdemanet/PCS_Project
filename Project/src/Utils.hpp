@@ -16,7 +16,8 @@ namespace GeometryLibrary{
 TEST(DFNTEST,readDFNTest)
 {
     // testo il numero di fratture lette
-    vector<Fracture> fractures = readDFN("FR3_data.txt");
+    string inputFileName="DFN/FR3_data.txt";
+    vector<Fracture> fractures = readDFN(inputFileName);
     EXPECT_EQ(fractures.size(),3);
 
     // testo i dati inerenti la prima frattura:id,num di vertici e matrice di coordinate
@@ -42,7 +43,7 @@ TEST(DFNTEST,readDFNTest)
     EXPECT_EQ(fractures[2].id,2);
     EXPECT_EQ(fractures[2].numVertices,4);
     MatrixXd Matrix3=MatrixXd::Zero(3,4);
-    Matrix2<<-2.3777799999999999e-01,3.1618370000000001e-01,3.1618370000000001e-01,-2.3777799999999999e-01,
+    Matrix3<<-2.3777799999999999e-01,3.1618370000000001e-01,3.1618370000000001e-01,-2.3777799999999999e-01,
               5.0000000000000000e-01,5.0000000000000000e-01,5.0000000000000000e-01,5.0000000000000000e-01,
              -3.4444000000000002e-01,-3.4444000000000002e-01,4.5283889999999999e-01,4.5283889999999999e-01;
     EXPECT_EQ(fractures[2].vertices,Matrix3);
@@ -68,7 +69,8 @@ TEST(DFNTEST,TestComputeCentroid)
 TEST(DFNTEST,TestCircumference)
 {
     // per testare prendo la rpima e la seconda frattura del file sotto
-    vector<Fracture> fractures = readDFN("FR3_data.txt");
+    string inputFileName="DFN/FR3_data.txt";
+    vector<Fracture> fractures = readDFN(inputFileName);
     bool var=testCircumference(fractures[0],fractures[1]);
     EXPECT_EQ(var,true);
 
