@@ -81,16 +81,6 @@ vector<Trace> computeTraces (vector<struct Fracture>& fractures)
 }
 
 
-//****************************************************************************************************************
-
-vector<Vector3d> TraceVertexes1(Vector3d& Point1, // nel selezionare i vertici della traccia voglio portarmi dietro anche l'informazione
-                                Vector3d& Point2, // sui quattro vertici calcolati mediante l'intersezione per poi usarli per vedere tips
-                                Fracture& fracture1,
-                                Fracture& fracture2)
-{
-
-}
-
 
 //****************************************************************************************************************
 
