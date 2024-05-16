@@ -76,9 +76,20 @@ vector<Trace> computeTraces (vector<struct Fracture>& fractures)
 
     }
     return vecTrace;
+
+    // La funzione è giusta e fa quello che deve fare, ma è inutile defininire i vertici appartenenti a prima e seconda traccia
 }
 
 
+//****************************************************************************************************************
+
+vector<Vector3d> TraceVertexes1(Vector3d& Point1, // nel selezionare i vertici della traccia voglio portarmi dietro anche l'informazione
+                                Vector3d& Point2, // sui quattro vertici calcolati mediante l'intersezione per poi usarli per vedere tips
+                                Fracture& fracture1,
+                                Fracture& fracture2)
+{
+
+}
 
 
 //****************************************************************************************************************
@@ -88,6 +99,7 @@ vector<Vector3d> TraceVertexes(Vector3d& Point1,
                                Fracture& fracture1,
                                Fracture& fracture2)
 {
+
     vector<Vector3d> vertex_Inters; // nelle prime due posizioni ho i punti di intersezione che trovo con la prima frattura
                                     // nelle altre due ho quelli che trovo con la frattura 2
     for(int i=0;i<fracture1.numVertices;++i)
@@ -108,8 +120,6 @@ vector<Vector3d> TraceVertexes(Vector3d& Point1,
             break;
         }
 
-
-
         Vector2d solution=A.fullPivLu().solve(b);
         Vector3d intersectionPoint=Point1+solution[0]*(Point2-Point1);
         // basta controllare che beta stia tra 0 e 1
@@ -119,9 +129,6 @@ vector<Vector3d> TraceVertexes(Vector3d& Point1,
         }
 
         vertex_Inters.push_back(intersectionPoint);
-
-
-
     }
 
     for(int i=0;i<fracture1.numVertices;++i)
@@ -152,7 +159,6 @@ vector<Vector3d> TraceVertexes(Vector3d& Point1,
             break;
         }
         vertex_Inters.push_back(intersectionPoint);
-
 
     }
 
