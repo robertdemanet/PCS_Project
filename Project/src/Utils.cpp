@@ -118,13 +118,11 @@ vector<Vector3d> TraceVertexes(Vector3d& Point1,
             break;
         }
 
-<<<<<<< Updated upstream
-        Vector2d solution=A.fullPivLu().solve(b);
-=======
+
 
 
         Vector2d solution=A.householderQr().solve(b);
->>>>>>> Stashed changes
+
         Vector3d intersectionPoint=Point1+solution[0]*(Point2-Point1);
         // basta controllare che beta stia tra 0 e 1
         if( !(solution[1]>=0 && solution[1]<=1))
