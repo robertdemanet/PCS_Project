@@ -24,6 +24,14 @@ struct Trace {
     int Fracture2ID;
     Vector3d firstPoint;
     Vector3d finalPoint;
+
+   /* bool operator==(const Trace& other) const {
+        return id == other.id &&
+               Fracture1ID == other.Fracture1ID &&
+               Fracture2ID == other.Fracture2ID &&
+               firstPoint == other.firstPoint &&
+               finalPoint == other.finalPoint;
+    }*/
 };
 
 struct Support{

@@ -42,32 +42,32 @@ vector<Trace> computeTraces (vector<struct Fracture>& fractures)
             Matrix3d A;
             A << norm1.transpose(), norm2.transpose(), tangent.transpose();
 
-            if (!(A.determinant() != 0)) // si può sostituire con il calcolo di un prodotto vettoriale,vedere appunti Vicini
+            if (A.determinant() != 0)// si può sostituire con il calcolo di un prodotto vettoriale,vedere appunti Vicini
             {
-                break;
+                Vector3d b;
+                double d1 = fractures[i].vertices.col(0).dot(norm1);
+                double d2 = fractures[j].vertices.col(0).dot(norm2);
+                b << d1, d2, 0;
+
+                // Risolvo il sistema lineare:
+
+
+                Vector3d intersection_point = A.fullPivLu().solve(b);// utilizziamo la fattorizzazione PALU perché è la più efficiente, con un costo di (n^3)/3 operazioni
+                Vector3d otherPoint= intersection_point+0.1*tangent;
+                vector<Vector3d > vertex_Inters =TraceVertexes(intersection_point,otherPoint,fractures[i],fractures[j]);
+                sort(vertex_Inters.begin(),vertex_Inters.end(),comparePoints);
+
+
+                Trace.id=countID;
+                Trace.Fracture1ID=fractures[i].id;
+                Trace.Fracture2ID=fractures[j].id;
+                Trace.firstPoint=vertex_Inters[0];
+                Trace.finalPoint=vertex_Inters[1];
+                vecTrace.push_back(Trace);
             }
 
 
-            Vector3d b;
-            double d1 = fractures[i].vertices.col(0).dot(norm1);
-            double d2 = fractures[j].vertices.col(0).dot(norm2);
-            b << d1, d2, 0;
 
-            // Risolvo il sistema lineare:
-
-
-            Vector3d intersection_point = A.fullPivLu().solve(b);// utilizziamo la fattorizzazione PALU perché è la più efficiente, con un costo di (n^3)/3 operazioni
-            Vector3d otherPoint= intersection_point+0.1*tangent;
-            vector<Vector3d > vertex_Inters =TraceVertexes(intersection_point,otherPoint,fractures[i],fractures[j]);
-            sort(vertex_Inters.begin(),vertex_Inters.end(),comparePoints);
-
-
-            Trace.id=countID;
-            Trace.Fracture1ID=fractures[i].id;
-            Trace.Fracture2ID=fractures[j].id;
-            Trace.firstPoint=vertex_Inters[0];
-            Trace.finalPoint=vertex_Inters[1];
-            vecTrace.push_back(Trace);
 
 
 
@@ -95,11 +95,14 @@ vector<Vector3d> TraceVertexes(Vector3d& Point1,
     for(int i=0;i<fracture1.numVertices;++i)
     {
         MatrixXd A;
-        Vector3d b=fracture1.vertices.col(i )-Point1;
-        Vector3d d=fracture1.vertices.col(i+1 % fracture1.numVertices)-fracture1.vertices.col(i );
+        A.resize(3,2);
+       // Vector3d b=fracture1.vertices.col(i )-Point1;
+        //Prova:
+        Vector3d b=Point1-fracture1.vertices.col(i);
+        Vector3d d=fracture1.vertices.col((i+1) % fracture1.numVertices)-fracture1.vertices.col(i );
         Vector3d t= Point2-Point1;
-        A<< t;
-        A<<d;
+        A<< t,d;
+
         /*Matrix2d A1;
         A1<<A.row(0),A.row(1);
         Matrix2d A2;
@@ -113,34 +116,37 @@ vector<Vector3d> TraceVertexes(Vector3d& Point1,
 
         //controllo che le rette non siano parallele
         Vector3d control=t.cross(d);
-        if(!(control[0]!=0 && control[1]!=0 && control[2]!=0))
+        if(control[0]!=0 || control[1]!=0 || control[2]!=0)
         {
-            break;
+            Vector2d solution=A.householderQr().solve(b);
+
+            Vector3d intersectionPoint=Point1+solution[0]*(Point2-Point1);
+            // basta controllare che beta stia tra 0 e 1
+            if( (-solution[1]>=0 && -solution[1]<=1))
+            {
+                vertex_Inters.push_back(intersectionPoint);
+            }
+
         }
 
 
 
 
-        Vector2d solution=A.householderQr().solve(b);
 
-        Vector3d intersectionPoint=Point1+solution[0]*(Point2-Point1);
-        // basta controllare che beta stia tra 0 e 1
-        if( !(solution[1]>=0 && solution[1]<=1))
-        {
-            break;
-        }
-
-        vertex_Inters.push_back(intersectionPoint);
     }
 
-    for(int i=0;i<fracture1.numVertices;++i)
+    for(int i=0;i<fracture2.numVertices;++i)
     {
         MatrixXd A;
-        Vector3d b= Point1-fracture2.vertices.col(i % fracture2.numVertices);
-        Vector3d d=fracture2.vertices.col(i % fracture2.numVertices)-fracture2.vertices.col(i+1 % fracture2.numVertices);
+        A.resize(3,2);
+       // Vector3d b= fracture2.vertices.col(i )-Point1;
+        //Prova:
+        Vector3d b=Point1-fracture1.vertices.col(i);
+
+        Vector3d d=fracture2.vertices.col((i+1) % fracture2.numVertices)-fracture2.vertices.col(i );
         Vector3d t= Point2-Point1;
-        A<< t;
-        A<<d;
+        A<< t,d;
+
        /* Matrix2d A1;
         A1<<A.row(0),A.row(1);
         Matrix2d A2;
@@ -154,21 +160,20 @@ vector<Vector3d> TraceVertexes(Vector3d& Point1,
 
         //controllo che le rette non siano parallele
         Vector3d control=t.cross(d);
-        if(!(control[0]!=0 && control[1]!=0 && control[2]!=0))
+        if(control[0]!=0 || control[1]!=0 || control[2]!=0)
         {
-            break;
+            Vector2d solution=A.householderQr().solve(b);
+            Vector3d intersectionPoint=Point1+solution[0]*(Point2-Point1);
+            // basta controllare che beta stia tra 0 e 1
+            if(-solution[1]>=0 && -solution[1]<=1)
+              {
+                vertex_Inters.push_back(intersectionPoint);
+             }
         }
 
 
 
-        Vector2d solution=A.householderQr().solve(b);
-        Vector3d intersectionPoint=Point1+solution[0]*(Point2-Point1);
-        // basta controllare che beta stia tra 0 e 1
-        if( !(solution[1]>=0 && solution[1]<=1))
-        {
-            break;
-        }
-        vertex_Inters.push_back(intersectionPoint);
+
 
     }
 
@@ -180,9 +185,11 @@ vector<Vector3d> TraceVertexes(Vector3d& Point1,
 
 //****************************************************************************************************************
 bool comparePoints(const Vector3d& v1,const Vector3d& v2){
-    if(v1[0]!=v2[0]) return v1[0]<v2[0];
-    if(v1[1]!=v2[1]) return v1[1]<v2[1];
-    if(v1[2]!=v2[2]) return v1[2]<v2[2];
+    if(v1[0]!=v2[0] && v1[0]<v2[0])
+        return true;
+    else{return false;}
+   // if(v1[1]!=v2[1]) return v1[1]<v2[1];
+   // if(v1[2]!=v2[2]) return v1[2]<v2[2];
 }
 //****************************************************************************************************************
 vector<vector<Support>> writeResult(const string& outputFilePath,
@@ -428,24 +435,32 @@ vector<Fracture> readDFN(const string &filename) {
         char b;
         istringstream convertIDandVERT(line);
         convertIDandVERT >> fracture.id >> b >> fracture.numVertices;
+        fracture.vertices.resize(3,fracture.numVertices);
 
 
-        getline(file,line); // header of vertices
-        for (int j = 0; j < 3; ++j) {
+
+       getline(file,line); // header of vertices
+       for (int j = 0; j < 3; ++j) {
             getline(file,line); // line of x/y/z coordinates
             char d;
             istringstream convertCOORD(line);
             for (int k = 0; k < fracture.numVertices; ++k) {
                 if(k != fracture.numVertices - 1){
-                    convertCOORD >> fracture.vertices(j,k) >> d;
+                    double vertice;
+                    convertCOORD >>vertice;
+                    fracture.vertices(j,k)=vertice;
+                    convertCOORD >> d;
                 }
                 else{
-                    convertCOORD >> fracture.vertices(j,k);
+                    double vertice;
+                    convertCOORD >>vertice;
+                    fracture.vertices(j,k)=vertice;
                 }
             }
 
-        fractures.push_back(fracture);
         }
+        fractures.push_back(fracture);
+
     }
 
     file.close();

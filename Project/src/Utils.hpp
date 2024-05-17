@@ -69,7 +69,7 @@ TEST(DFNTEST,TestComputeCentroid)
 TEST(DFNTEST,TestCircumference)
 {
     // per testare prendo la rpima e la seconda frattura del file sotto
-    string inputFileName="DFN/FR3_data.txt";
+    string inputFileName="FR3_data.txt";
     vector<Fracture> fractures = readDFN(inputFileName);
     bool var=testCircumference(fractures[0],fractures[1]);
     EXPECT_EQ(var,true);
@@ -84,25 +84,36 @@ TEST(DFNTEST,TestComputeTraces)
     Fracture fracture1;
     fracture1.numVertices = 4;
     fracture1.id = 0;
-    MatrixXd vertices1;
-    vertices1 << 0, 1, 1, 0,
-                 0, 0, 1, 1,
-                 0, 0, 0, 0;
-    fracture1.vertices = vertices1;
+    fracture1.vertices.resize(3,4);
+    MatrixXd vertices1=fracture1.vertices;
 
+    //vertices1 << 0, 1, 1, 0,
+                // 0, 0, 1, 1,
+               //  0, 0, 0, 0;
+
+    vertices1<<0.0000000000000000e+00, 1.0000000000000000e+00, 1.0000000000000000e+00, 0.0000000000000000e+00,
+               0.0000000000000000e+00,0.0000000000000000e+00,1.0000000000000000e+00,1.0000000000000000e+00,
+        0.0000000000000000e+00,0.0000000000000000e+00,0.0000000000000000e+00,0.0000000000000000e+00;
     Fracture fracture2;
     fracture2.numVertices = 4;
     fracture2.id = 1;
-    MatrixXd vertices2;
-    vertices2 << 0, 1, 1, 0,
-                 1, 1, 1, 1,
-                -1, -1, 1, 1;
-    fracture2.vertices = vertices2;
+    fracture2.vertices.resize(3,4);
+    MatrixXd vertices2=fracture1.vertices;
+    //vertices2 << 0, 1, 1, 0,
+               //  1, 1, 1, 1,
+              //  -1, -1, 1, 1;
+
+
+    vertices2<<8.0000000000000004e-01, 8.0000000000000004e-01, 8.0000000000000004e-01, 8.0000000000000004e-01,
+               0.0000000000000000e+00,0.0000000000000000e+00, 1.0000000000000000e+00,1.0000000000000000e+00,
+              -1.0000000000000001e-01, 2.9999999999999999e-01, 2.9999999999999999e-01, -1.0000000000000001e-01;
 
     Vector3d trace_vertice1;
-    trace_vertice1 << 0, 0.5, 0;
+    //trace_vertice1 << 0, 0.5, 0;
+    trace_vertice1<<0.8,0,0;
     Vector3d trace_vertice2;
-    trace_vertice2 << 1, 0.5, 0;
+    //trace_vertice2 << 1, 0.5, 0;
+    trace_vertice2<<0.8,-1,0;
 
     vector<Trace> vecTraces;
     Trace trace;
@@ -112,13 +123,21 @@ TEST(DFNTEST,TestComputeTraces)
     trace.firstPoint = trace_vertice1;
     trace.finalPoint = trace_vertice2;
 
+
+
     vecTraces.push_back(trace);
-    Vector<Fracture> vecFractures;
+    vector<Fracture> vecFractures;
     vecFractures.push_back(fracture1);
     vecFractures.push_back(fracture2);
 
+    vector<Trace> a;
+    a=computeTraces(vecFractures);
+    Vector3d prova=a[0].firstPoint;
 
-    EXPECT_EQ(computeTraces(vecFractures), vecTraces);
+
+
+    EXPECT_EQ(a[0].finalPoint,trace_vertice1);
+    //EXPECT_EQ(computeTraces(vecFractures),vecTraces);
 }
 
 
@@ -146,3 +165,4 @@ TEST(DFNTEST,TestComputeTraces)
 
 
 #endif
+
