@@ -27,11 +27,17 @@ vector<Trace> computeTraces (vector<struct Fracture>& fractures)
             Vector3d v1 = fractures[i].vertices.col(1) - fractures[i].vertices.col(0);
             Vector3d norm1 = (u1.cross(v1)).normalized();
 
+            //Vector3d prod_vett1=u1.cross(v1);
+            //Vector3d norm_1=prod_vett1/(u1.norm()*v1.norm());
+
             // Calcolo i vettori che generano la normale per la seconda frattura:
 
             Vector3d u2 = fractures[j].vertices.col(2) - fractures[j].vertices.col(0);
             Vector3d v2 = fractures[j].vertices.col(1) - fractures[j].vertices.col(0);
             Vector3d norm2 = (u2.cross(v2)).normalized();
+
+            //Vector3d prod_vett2=u2.cross(v2);
+            //Vector3d norm_2=prod_vett2/(u2.norm()*v2.norm());
 
             // Calcolo la direzione della retta di intersezione:
 
@@ -61,8 +67,8 @@ vector<Trace> computeTraces (vector<struct Fracture>& fractures)
                 Trace.id=countID;
                 Trace.Fracture1ID=fractures[i].id;
                 Trace.Fracture2ID=fractures[j].id;
-                Trace.firstPoint=vertex_Inters[0];
-                Trace.finalPoint=vertex_Inters[1];
+                Trace.firstPoint=vertex_Inters[1];
+                Trace.finalPoint=vertex_Inters[2];
                 vecTrace.push_back(Trace);
             }
 
@@ -96,23 +102,13 @@ vector<Vector3d> TraceVertexes(Vector3d& Point1,
     {
         MatrixXd A;
         A.resize(3,2);
-       // Vector3d b=fracture1.vertices.col(i )-Point1;
-        //Prova:
-        Vector3d b=Point1-fracture1.vertices.col(i);
+        Vector3d b=fracture1.vertices.col(i )-Point1;
+
         Vector3d d=fracture1.vertices.col((i+1) % fracture1.numVertices)-fracture1.vertices.col(i );
+
         Vector3d t= Point2-Point1;
         A<< t,d;
 
-        /*Matrix2d A1;
-        A1<<A.row(0),A.row(1);
-        Matrix2d A2;
-        A2<<A.row(0),A.row(2);
-        Matrix2d A3;
-        A3<<A.row(1),A.row(2);
-        if( !(A1.determinant()!=0 || A2.determinant()!=0 || A3.determinant()!=0))
-        {
-            break;
-        }*/
 
         //controllo che le rette non siano parallele
         Vector3d control=t.cross(d);
@@ -139,24 +135,14 @@ vector<Vector3d> TraceVertexes(Vector3d& Point1,
     {
         MatrixXd A;
         A.resize(3,2);
-       // Vector3d b= fracture2.vertices.col(i )-Point1;
-        //Prova:
-        Vector3d b=Point1-fracture1.vertices.col(i);
+        Vector3d b= fracture2.vertices.col(i )-Point1;
+
 
         Vector3d d=fracture2.vertices.col((i+1) % fracture2.numVertices)-fracture2.vertices.col(i );
         Vector3d t= Point2-Point1;
         A<< t,d;
 
-       /* Matrix2d A1;
-        A1<<A.row(0),A.row(1);
-        Matrix2d A2;
-        A2<<A.row(0),A.row(2);
-        Matrix2d A3;
-        A3<<A.row(1),A.row(2);
-        if( !(A1.determinant()!=0 || A2.determinant()!=0 || A3.determinant()!=0))
-        {
-            break;
-        }*/
+
 
         //controllo che le rette non siano parallele
         Vector3d control=t.cross(d);
