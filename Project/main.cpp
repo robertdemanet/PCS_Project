@@ -9,7 +9,7 @@ using namespace std;
 using namespace Eigen;
 using namespace GeometryLibrary;
 
-/*
+
 #include "Utils.hpp"
 
 
@@ -20,25 +20,24 @@ int main(int argc, char ** argv)
     return RUN_ALL_TESTS();
 }
 
-*/
 
 
 
-
+/*
 int main()
 
 
 {
-    string NameFile= "FR3_data.txt";
+   /* string NameFile= "FR3_data.txt";
     vector<Fracture> fractures;
     fractures=readDFN(NameFile);
     vector<Trace> Traces;
     Traces=computeTraces(fractures);
-    cout<<Traces[1].id<<endl<<Traces[1].Fracture1ID<<endl<<Traces[1].Fracture2ID<<endl<<Traces[1].firstPoint<<endl<<Traces[1].finalPoint;
+    cout<<Traces[2].id<<endl<<Traces[2].Fracture1ID<<endl<<Traces[2].Fracture2ID<<endl<<Traces[2].firstPoint<<endl<<Traces[2].finalPoint;
     string outputFileName="Traces.txt";
     vector<vector<Support>> Support = writeResult(outputFileName,Traces);
 
-/*    vector<vector<Support>> Return;
+    vector<vector<Support>> Return;
     vector<Support> vec;
     Support S;
     S.idT=0;
@@ -47,11 +46,11 @@ int main()
     S.Tips=false;
 
     Return.push_back(vector<Support>());
-    Return[0].push_back(S);*/
+    Return[0].push_back(S);
 
 
 
-  /*  Fracture fracture1;
+    Fracture fracture1;
     fracture1.numVertices = 4;
     fracture1.id = 0;
     fracture1.vertices.resize(3,4);
@@ -74,8 +73,8 @@ int main()
     vecFractures.push_back(fracture2);
     vector<Trace> a;
     a=computeTraces(vecFractures);
-    cout<<a[0].firstPoint<<endl<<a[0].finalPoint;
-    cout<<a[0].vertex_Inters          */
+   // cout<<a[0].firstPoint<<endl<<a[0].finalPoint;
+    cout << a[0].vertex_Inters[0]<<"        "<<a[0].vertex_Inters[1]<<"        "<<a[0].vertex_Inters[2]<<"        "<<a[0].vertex_Inters[3]<<"        ";
 
 
 
@@ -85,4 +84,4 @@ int main()
 
   return 0;
 }
-
+*/
