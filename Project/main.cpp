@@ -34,7 +34,22 @@ int main()
     fractures=readDFN(NameFile);
     vector<Trace> Traces;
     Traces=computeTraces(fractures);
-    cout<<Traces[0].id<<endl<<Traces[0].Fracture1ID<<endl<<Traces[0].Fracture2ID<<endl<<Traces[0].firstPoint<<endl<<Traces[0].finalPoint;
+    cout<<Traces[1].id<<endl<<Traces[1].Fracture1ID<<endl<<Traces[1].Fracture2ID<<endl<<Traces[1].firstPoint<<endl<<Traces[1].finalPoint;
+    string outputFileName="Traces.txt";
+    vector<vector<Support>> Support = writeResult(outputFileName,Traces);
+
+/*    vector<vector<Support>> Return;
+    vector<Support> vec;
+    Support S;
+    S.idT=0;
+    S.NumTraces=0;
+    S.lenght=0;
+    S.Tips=false;
+
+    Return.push_back(vector<Support>());
+    Return[0].push_back(S);*/
+
+
 
   /*  Fracture fracture1;
     fracture1.numVertices = 4;
@@ -59,7 +74,8 @@ int main()
     vecFractures.push_back(fracture2);
     vector<Trace> a;
     a=computeTraces(vecFractures);
-    cout<<a[0].firstPoint<<endl<<a[0].finalPoint;*/
+    cout<<a[0].firstPoint<<endl<<a[0].finalPoint;
+    cout<<a[0].vertex_Inters          */
 
 
 

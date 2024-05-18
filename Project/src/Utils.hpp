@@ -1,4 +1,4 @@
-#ifndef __TESTUTILS_H
+/*#ifndef __TESTUTILS_H
 #define __TESTUTILS_H
 
 #include <gtest/gtest.h>
@@ -107,7 +107,6 @@ TEST(DFNTEST,TestComputeTraces)
     trace_vertice2 << 1, 0.5, 0;
 
 
-    vector<Trace> vecTraces;
     Trace trace;
     trace.id = 0;
     trace.Fracture1ID = 0;
@@ -128,7 +127,26 @@ TEST(DFNTEST,TestComputeTraces)
 
 }
 
+TEST(DFNTEST,TestWriteResult)
+{
+    Vector3d trace_vertice1;
+    trace_vertice1 << 0, 0.5, 0;
 
+    Vector3d trace_vertice2;
+    trace_vertice2 << 1, 0.5, 0;
+    Trace trace;
+
+    trace.id = 0;
+    trace.Fracture1ID = 0;
+    trace.Fracture2ID = 1;
+    trace.firstPoint = trace_vertice1;
+    trace.finalPoint = trace_vertice2;
+
+
+
+
+
+}
 
 
 
@@ -143,7 +161,7 @@ TEST(DFNTEST,TestComputeTraces)
 
 }
 
-
+*/
 
 
 

@@ -24,6 +24,7 @@ struct Trace {
     int Fracture2ID;
     Vector3d firstPoint;
     Vector3d finalPoint;
+    vector<Vector3d> vertex_Inters;
 
    /* bool operator==(const Trace& other) const {
         return id == other.id &&
@@ -62,8 +63,8 @@ bool compareLenght(const Support& Support1,const Support& Support2);
 
 
 vector<vector<Support>> writeResult(const string& outputFilePath, // le posizioni del vector più esterno corrispondono all'id della frattura
-                            vector<Trace>& Traces,                // per ogni frattura accedo al vector di struct Support e poi alla singola
-                                    vector<Vector3d>& vertex_Inters);   // Support
+                                    vector<Trace>& Traces);              // per ogni frattura accedo al vector di struct Support e poi alla singola
+                                                                  // Support
 
 bool writeTracesForFracture(const string& outputFilePath,
                             vector<vector<Support>>& FractureTraces);

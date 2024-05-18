@@ -69,6 +69,7 @@ vector<Trace> computeTraces (vector<struct Fracture>& fractures)
                 Trace.Fracture2ID=fractures[j].id;
                 Trace.firstPoint=vertex_Inters[1];
                 Trace.finalPoint=vertex_Inters[2];
+                Trace.vertex_Inters=vertex_Inters;
                 vecTrace.push_back(Trace);
             }
 
@@ -179,7 +180,7 @@ bool comparePoints(const Vector3d& v1,const Vector3d& v2){
 }
 //****************************************************************************************************************
 vector<vector<Support>> writeResult(const string& outputFilePath,
-                                    vector<Trace>& Traces,vector<Vector3d> vertex_Inters)
+                                    vector<Trace>& Traces)
 {
     vector<vector<Support>> Return;
     struct Support S;
@@ -212,8 +213,8 @@ vector<vector<Support>> writeResult(const string& outputFilePath,
                                               pow(Traces[i].finalPoint[1]-Traces[i].firstPoint[1],2)+
                                                 pow(Traces[i].finalPoint[2]-Traces[i].firstPoint[2],2);
         //con questa condizione verifico se i vertici della traccia appartengono entrambi alla frattura1
-        if( ((Traces[i].firstPoint.isApprox(vertex_Inters[0])) || (Traces[i].firstPoint.isApprox(vertex_Inters[1]))) &&
-            ((Traces[i].finalPoint.isApprox(vertex_Inters[0])) || (Traces[i].finalPoint.isApprox(vertex_Inters[1])))  ){
+        if( ((Traces[i].firstPoint.isApprox(Traces[i].vertex_Inters[0])) || (Traces[i].firstPoint.isApprox(Traces[i].vertex_Inters[1]))) &&
+            ((Traces[i].finalPoint.isApprox(Traces[i].vertex_Inters[0])) || (Traces[i].finalPoint.isApprox(Traces[i].vertex_Inters[1])))  ){
 
             S.Tips=false;
 
@@ -229,10 +230,12 @@ vector<vector<Support>> writeResult(const string& outputFilePath,
 
 
 
+        Return.push_back(vector<Support>());
         Return[Traces[i].Fracture1ID].push_back(S);
 
-        if( ((Traces[i].firstPoint.isApprox(vertex_Inters[2])) || (Traces[i].firstPoint.isApprox(vertex_Inters[3]))) &&
-            ((Traces[i].finalPoint.isApprox(vertex_Inters[2])) || (Traces[i].finalPoint.isApprox(vertex_Inters[3])))  ){
+            //Qui il controllo sarebbe da fare con la tolleranza
+        if( ((Traces[i].firstPoint.isApprox(Traces[i].vertex_Inters[2])) || (Traces[i].firstPoint.isApprox(Traces[i].vertex_Inters[3]))) &&
+            ((Traces[i].finalPoint.isApprox(Traces[i].vertex_Inters[2])) || (Traces[i].finalPoint.isApprox(Traces[i].vertex_Inters[3])))  ){
 
             S.Tips=false;
 
@@ -244,13 +247,16 @@ vector<vector<Support>> writeResult(const string& outputFilePath,
 
 
 
+        Return.push_back(vector<Support>());
         Return[Traces[i].Fracture2ID].push_back(S);
 
 
 
 
 
+
     }
+    file.close();
     //ordino i vettori per lunghezza in maniera decrescente e separatamente per passante e non passante
     for(auto& vec:Return)
     {
