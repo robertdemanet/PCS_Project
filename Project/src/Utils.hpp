@@ -135,11 +135,12 @@ TEST(DFNTEST,TestWriteResult)
 
     Vector3d trace_vertice2;
     trace_vertice2 << 1, 0.5, 0;
-    vector<Vector3d> vertex_Inters;
-    vertex_Inters.push_back(trace_vertice2);
-    vertex_Inters.push_back(trace_vertice1);
-    vertex_Inters.push_back(trace_vertice2);
-    vertex_Inters.push_back(trace_vertice1);
+    vector<Vector3d> vertex_Inters1;
+    vertex_Inters1.push_back(trace_vertice2);
+    vertex_Inters1.push_back(trace_vertice1);
+    vector<Vector3d> vertex_Inters2;
+    vertex_Inters2.push_back(trace_vertice2);
+    vertex_Inters2.push_back(trace_vertice1);
     Trace trace;
     vector<Trace> vecTrace;
 
@@ -148,10 +149,14 @@ TEST(DFNTEST,TestWriteResult)
     trace.Fracture2ID = 1;
     trace.firstPoint = trace_vertice1;
     trace.finalPoint = trace_vertice2;
-    trace.vertex_Inters=vertex_Inters;
+    trace.vertex_Inters1=vertex_Inters1;
+    trace.vertex_Inters2=vertex_Inters2;
     vecTrace.push_back(trace);
     string FileProva="ProvaTracce.txt";
     vector<vector<Support>> r=writeResult(FileProva,vecTrace);
+    string Output="TracesForFracture.txt";
+    bool v=  writeTracesForFracture(Output,r);
+
     EXPECT_EQ(r[0][0].idT,0);
     EXPECT_EQ(r[0][0].Tips,false);
     EXPECT_EQ(r[0][0].lenght,1);
@@ -161,16 +166,16 @@ TEST(DFNTEST,TestWriteResult)
     EXPECT_EQ(r[1][0].Tips,false);
     EXPECT_EQ(r[1][0].lenght,1);
 
+    EXPECT_EQ(v,true);
+
+
+
 
 
 
 
 
 }
-
-
-
-
 
 
 

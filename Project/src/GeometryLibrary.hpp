@@ -24,7 +24,9 @@ struct Trace {
     int Fracture2ID;
     Vector3d firstPoint;
     Vector3d finalPoint;
-    vector<Vector3d> vertex_Inters;
+    vector<Vector3d> vertex_Inters1;
+    vector<Vector3d> vertex_Inters2;
+
 
    /* bool operator==(const Trace& other) const {
         return id == other.id &&
@@ -55,8 +57,7 @@ vector<Trace> computeTraces(vector<Fracture>& fractures);
 
 vector<Vector3d> TraceVertexes(Vector3d& Point1,
                                Vector3d& Point2,
-                               Fracture& fracture1,
-                               Fracture& fracture2);
+                               Fracture& fracture1);
 
 bool comparePoints(const Vector3d& v1,const Vector3d& v2);
 bool compareLenght(const Support& Support1,const Support& Support2);

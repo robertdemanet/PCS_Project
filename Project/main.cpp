@@ -28,14 +28,16 @@ int main()
 
 
 {
-   /* string NameFile= "FR3_data.txt";
+    string NameFile= "FR3_data.txt";
     vector<Fracture> fractures;
     fractures=readDFN(NameFile);
     vector<Trace> Traces;
     Traces=computeTraces(fractures);
     cout<<Traces[2].id<<endl<<Traces[2].Fracture1ID<<endl<<Traces[2].Fracture2ID<<endl<<Traces[2].firstPoint<<endl<<Traces[2].finalPoint;
     string outputFileName="Traces.txt";
-    vector<vector<Support>> Support = writeResult(outputFileName,Traces);
+    vector<vector<Support>> FractureTraces = writeResult(outputFileName,Traces);
+    string outputName="TracesForFracture.txt";
+    writeTracesForFracture(outputName,FractureTraces);
 
     vector<vector<Support>> Return;
     vector<Support> vec;

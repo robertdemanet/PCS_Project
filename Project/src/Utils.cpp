@@ -61,8 +61,14 @@ vector<Trace> computeTraces (vector<struct Fracture>& fractures)
 
                 Vector3d intersection_point = A.fullPivLu().solve(b);// utilizziamo la fattorizzazione PALU perché è la più efficiente, con un costo di (n^3)/3 operazioni
                 Vector3d otherPoint= intersection_point+0.1*tangent;
-                vector<Vector3d > vertex_Inters =TraceVertexes(intersection_point,otherPoint,fractures[i],fractures[j]);
-                Trace.vertex_Inters=vertex_Inters;
+                vector<Vector3d > vertex_Inters1 =TraceVertexes(intersection_point,otherPoint,fractures[i]);
+                vector<Vector3d > vertex_Inters2 =TraceVertexes(intersection_point,otherPoint,fractures[j]);
+                vector<Vector3d> vertex_Inters;
+                vertex_Inters.insert(vertex_Inters.end(),vertex_Inters1.begin(),vertex_Inters1.end());
+                vertex_Inters.insert(vertex_Inters.end(),vertex_Inters2.begin(),vertex_Inters2.end());
+
+                Trace.vertex_Inters1=vertex_Inters1;
+                Trace.vertex_Inters2=vertex_Inters2;
                 sort(vertex_Inters.begin(),vertex_Inters.end(),comparePoints);
 
 
@@ -104,8 +110,7 @@ vector<Trace> computeTraces (vector<struct Fracture>& fractures)
 
 vector<Vector3d> TraceVertexes(Vector3d& Point1,
                                Vector3d& Point2,
-                               Fracture& fracture1,
-                               Fracture& fracture2)
+                               Fracture& fracture1)
 {
     const double tol= 1e-10;
     vector<Vector3d> vertex_Inters; // nelle prime due posizioni ho i punti di intersezione che trovo con la prima frattura
@@ -136,45 +141,7 @@ vector<Vector3d> TraceVertexes(Vector3d& Point1,
             }
 
         }
-
-
-
-
-
     }
-
-    for(int i=0;i<fracture2.numVertices;++i)
-    {
-        MatrixXd A;
-        A.resize(3,2);
-        Vector3d b= fracture2.vertices.col(i )-Point1;
-
-
-        Vector3d d=fracture2.vertices.col((i+1) % fracture2.numVertices)-fracture2.vertices.col(i );
-        Vector3d t= Point2-Point1;
-        A<< t,d;
-
-
-
-        //controllo che le rette non siano parallele
-        Vector3d control=t.cross(d);
-        if(control[0]!=0 || control[1]!=0 || control[2]!=0)
-        {
-            Vector2d solution=A.householderQr().solve(b);
-            Vector3d intersectionPoint=Point1+solution[0]*(Point2-Point1);
-            // basta controllare che beta stia tra 0 e 1
-            if(-solution[1]>=0-tol && -solution[1]<=1+tol)
-              {
-                vertex_Inters.push_back(intersectionPoint);
-             }
-        }
-
-
-
-
-
-    }
-
 
 
 
@@ -225,16 +192,19 @@ vector<vector<Support>> writeResult(const string& outputFilePath,
                                                 pow(Traces[i].finalPoint[2]-Traces[i].firstPoint[2],2);
         //con questa condizione verifico se i vertici della traccia appartengono entrambi alla frattura1
         //Qui il controllo sarebbe da fare con la tolleranza
-         if( ((Traces[i].firstPoint.isApprox(Traces[i].vertex_Inters[0])) || (Traces[i].firstPoint.isApprox(Traces[i].vertex_Inters[1]))) &&
-            ((Traces[i].finalPoint.isApprox(Traces[i].vertex_Inters[0])) || (Traces[i].finalPoint.isApprox(Traces[i].vertex_Inters[1])))  ){
+        if(Traces[i].vertex_Inters1.size()==2){
+         if( ((Traces[i].firstPoint.isApprox(Traces[i].vertex_Inters1[0])) || (Traces[i].firstPoint.isApprox(Traces[i].vertex_Inters1[1]))) &&
+            ((Traces[i].finalPoint.isApprox(Traces[i].vertex_Inters1[0])) || (Traces[i].finalPoint.isApprox(Traces[i].vertex_Inters1[1])))  ){
 
             S.Tips=false;
 
-          }
-          else
-          {
+            }
+           else
+            {
             S.Tips=true;
             }
+        }
+        else {S.Tips=true;}
 
 
 
@@ -247,16 +217,19 @@ vector<vector<Support>> writeResult(const string& outputFilePath,
         Return[Traces[i].Fracture1ID].push_back(S);
 
             //Qui il controllo sarebbe da fare con la tolleranza
-        if( ((Traces[i].firstPoint.isApprox(Traces[i].vertex_Inters[2])) || (Traces[i].firstPoint.isApprox(Traces[i].vertex_Inters[3]))) &&
-            ((Traces[i].finalPoint.isApprox(Traces[i].vertex_Inters[2])) || (Traces[i].finalPoint.isApprox(Traces[i].vertex_Inters[3])))  ){
+        if(Traces[i].vertex_Inters2.size()==2){
+            if( ((Traces[i].firstPoint.isApprox(Traces[i].vertex_Inters2[0])) || (Traces[i].firstPoint.isApprox(Traces[i].vertex_Inters2[1]))) &&
+                ((Traces[i].finalPoint.isApprox(Traces[i].vertex_Inters2[0])) || (Traces[i].finalPoint.isApprox(Traces[i].vertex_Inters2[1])))  ){
 
-            S.Tips=false;
+                S.Tips=false;
 
+            }
+            else
+            {
+                S.Tips=true;
+            }
         }
-        else
-        {
-            S.Tips=true;
-        }
+        else {S.Tips=true;}
 
 
 
