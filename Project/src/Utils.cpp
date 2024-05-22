@@ -536,6 +536,105 @@ vector<Fracture> readDFN(const string &filename) {
     return fractures;
 }
 //****************************************************************************************************************
+
+PolygonalMesh createMesh(vector<Fracture>& fractures,PolygonalMesh& mesh){
+    for(size_t i = 0;i<fractures.size();++i)
+    {
+        for(int j=0;j<fractures[i].numVertices;++j)
+        {
+            mesh.Cell0Id.resize(fractures[i].numVertices);
+            mesh.Cell0dCoordinates.resize(fractures[i].numVertices);
+            mesh.Cell0Id.push_back(j);
+            mesh.Cell0dCoordinates.push_back(fractures[i].vertices.col(j));
+
+            mesh.Cell1[j]={j,(j+1) % fractures[i].numVertices};
+        }
+        Cell2D cell2D;
+        cell2D.numIDvertices= mesh.Cell1.size()*2;
+        cell2D.IDs_vertices.resize(cell2D.numIDvertices);
+        cell2D.numIDedges=mesh.Cell1.size();
+        cell2D.IDs_edges.resize(cell2D.numIDedges);
+        for (const auto& elemento : mesh.Cell1)
+        {
+            cell2D.IDs_vertices.push_back(elemento.second[0]);
+            cell2D.IDs_vertices.push_back(elemento.second[1]);
+            cell2D.IDs_edges.push_back(elemento.first);
+        }
+
+        mesh.vecCell2D.resize(1);
+        mesh.vecCell2D.push_back(cell2D);
+
+    }
+
+
+
+
+
+
+
+
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 }
 
 
