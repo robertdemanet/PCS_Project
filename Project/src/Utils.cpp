@@ -36,8 +36,7 @@ vector<Trace> computeTraces (vector<struct Fracture>& fractures)
             Vector3d v2 = fractures[j].vertices.col(1) - fractures[j].vertices.col(0);
             Vector3d norm2 = (u2.cross(v2)).normalized();
 
-            //Vector3d prod_vett2=u2.cross(v2);
-            //Vector3d norm_2=prod_vett2/(u2.norm()*v2.norm());
+
 
             // Calcolo la direzione della retta di intersezione:
 
@@ -47,7 +46,12 @@ vector<Trace> computeTraces (vector<struct Fracture>& fractures)
 
             Matrix3d A;
             A << norm1.transpose(), norm2.transpose(), tangent.transpose();
+
+
             double c=tangent.dot(tangent);
+
+          //  double moltipl= (norm2[1]*tangent[2]-norm2[2]*tangent[1])-(norm2[0]*tangent[2]-norm2[2]*tangent[0])+
+                            // (norm2[0]*tangent[1]-norm2[1]*tangent[0]);
 
             if (A.determinant() != 0 && c!=0)// si può sostituire con il calcolo di un prodotto vettoriale,vedere appunti Vicini
             {
@@ -59,36 +63,102 @@ vector<Trace> computeTraces (vector<struct Fracture>& fractures)
                 // Risolvo il sistema lineare:
 
 
-                Vector3d intersection_point = A.fullPivLu().solve(b);// utilizziamo la fattorizzazione PALU perché è la più efficiente, con un costo di (n^3)/3 operazioni
+
+                Vector3d intersection_point = A.fullPivLu().solve(b);//P0, utilizziamo la fattorizzazione PALU perché è la più efficiente, con un costo di (n^3)/3 operazioni
                 Vector3d otherPoint= intersection_point+0.1*tangent;
-                vector<Vector3d > vertex_Inters1 =TraceVertexes(intersection_point,otherPoint,fractures[i]);
-                vector<Vector3d > vertex_Inters2 =TraceVertexes(intersection_point,otherPoint,fractures[j]);
-                vector<Vector3d> vertex_Inters;
+                vector<Vector3d > vertex_Inters1 =TraceVertexes(intersection_point,otherPoint,fractures[i]); //QUI HO A,B
+                vector<Vector3d > vertex_Inters2 =TraceVertexes(intersection_point,otherPoint,fractures[j]); // QUI HO C,D
+                if(vertex_Inters1.size()!=2 || vertex_Inters2.size()!=2)
+                {
+                    break;
+                }
+                double alphaA;
+                double alphaB;
+                double alphaC;
+                double alphaD;
+                if(tangent[0] != 0) {
+                    alphaA= (vertex_Inters1[0][0]-intersection_point[0])/tangent[0];
+                    alphaB= (vertex_Inters1[1][0]-intersection_point[0])/tangent[0];
+                    alphaC= (vertex_Inters2[0][0]-intersection_point[0])/tangent[0];
+                    alphaD= (vertex_Inters2[1][0]-intersection_point[0])/tangent[0];
+                }
+                else if (tangent[1]!=0) {
+                    alphaA= (vertex_Inters1[0][1]-intersection_point[1])/tangent[1];
+                    alphaB= (vertex_Inters1[1][1]-intersection_point[1])/tangent[1];
+                    alphaC= (vertex_Inters2[0][1]-intersection_point[1])/tangent[1];
+                    alphaD= (vertex_Inters2[1][1]-intersection_point[1])/tangent[1];
+                }
+                else if (tangent[2]!=0){
+                    alphaA= (vertex_Inters1[0][2]-intersection_point[2])/tangent[2];
+                    alphaB= (vertex_Inters1[1][2]-intersection_point[2])/tangent[2];
+                    alphaC= (vertex_Inters2[0][2]-intersection_point[2])/tangent[2];
+                    alphaD= (vertex_Inters2[1][2]-intersection_point[2])/tangent[2];
+                }
+                double alpha1;
+                double alpha2;
+                double alpha3;
+                double alpha4;
+
+                if(alphaA>alphaB)
+                {
+                    alpha1=alphaB;
+                    alpha2=alphaA;
+                }
+                else
+                {
+                    alpha1=alphaA;
+                    alpha2=alphaB;
+                }
+
+
+                if(alphaC>alphaD)
+                {
+                    alpha3=alphaD;
+                    alpha4=alphaC;
+                }
+                else
+                {
+                    alpha3=alphaC;
+                    alpha4=alphaD;
+                }
+
+                vector<double> d=compareAlphas(alpha1,alpha2,alpha3,alpha4);
+                if(d.size()==0)
+                {
+                    break;
+                }
+
+
+
+
+
+                /*vector<Vector3d> vertex_Inters;
                 vertex_Inters.insert(vertex_Inters.end(),vertex_Inters1.begin(),vertex_Inters1.end());
-                vertex_Inters.insert(vertex_Inters.end(),vertex_Inters2.begin(),vertex_Inters2.end());
+                vertex_Inters.insert(vertex_Inters.end(),vertex_Inters2.begin(),vertex_Inters2.end());*/
 
                 Trace.vertex_Inters1=vertex_Inters1;
                 Trace.vertex_Inters2=vertex_Inters2;
-                sort(vertex_Inters.begin(),vertex_Inters.end(),comparePoints);
+               // sort(vertex_Inters.begin(),vertex_Inters.end(),comparePoints);
 
 
 
                 Trace.id=countID;
                 Trace.Fracture1ID=fractures[i].id;
                 Trace.Fracture2ID=fractures[j].id;
-                if(vertex_Inters.size()>2){
+                Trace.firstPoint=intersection_point+d[0]*tangent;
+                Trace.finalPoint=intersection_point+d[1]*tangent;
+               /* if(vertex_Inters.size()>2){
                     Trace.firstPoint=vertex_Inters[1];
                     Trace.finalPoint=vertex_Inters[2];
-                }
+                 }
                 else
-                {
+                 {
                     Trace.firstPoint=vertex_Inters[0];
                     Trace.finalPoint=vertex_Inters[1];
-                }
+                 }*/
 
                 vecTrace.push_back(Trace);
                 countID=countID+1;
-            }
 
 
 
@@ -96,10 +166,15 @@ vector<Trace> computeTraces (vector<struct Fracture>& fractures)
 
 
 
-        }
+
+
+
+       }
 
     }
+    }
     return vecTrace;
+
 
     // La funzione è giusta e fa quello che deve fare, ma è inutile defininire i vertici appartenenti a prima e seconda traccia
 }
@@ -147,14 +222,30 @@ vector<Vector3d> TraceVertexes(Vector3d& Point1,
 
     return vertex_Inters;
 }
+//****************************************************************************************************************
+
+
+
 
 //****************************************************************************************************************
-bool comparePoints(const Vector3d& v1,const Vector3d& v2){
-    if(v1[0]!=v2[0] && v1[0]<v2[0])
-        return true;
-    else{return false;}
-   // if(v1[1]!=v2[1]) return v1[1]<v2[1];
-   // if(v1[2]!=v2[2]) return v1[2]<v2[2];
+vector<double> compareAlphas(double& alpha1,double& alpha2,double& alpha3,double& alpha4){
+
+    if(alpha1>alpha4 || alpha3>alpha2)
+    {
+        vector<double> d={};
+        return d ;
+    }
+
+    else{
+        vector<double> d={alpha1,alpha2,alpha3,alpha4};
+        sort(d.begin(),d.end());
+        vector<double> d_={d[1],d[2]};
+        return d_;
+    }
+
+
+
+
 }
 //****************************************************************************************************************
 vector<vector<Support>> writeResult(const string& outputFilePath,

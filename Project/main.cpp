@@ -28,18 +28,35 @@ int main()
 
 
 {
+
     string NameFile= "FR3_data.txt";
     vector<Fracture> fractures;
     fractures=readDFN(NameFile);
+
+
     vector<Trace> Traces;
     Traces=computeTraces(fractures);
-    cout<<Traces[2].id<<endl<<Traces[2].Fracture1ID<<endl<<Traces[2].Fracture2ID<<endl<<Traces[2].firstPoint<<endl<<Traces[2].finalPoint;
-    string outputFileName="Traces.txt";
-    vector<vector<Support>> FractureTraces = writeResult(outputFileName,Traces);
-    string outputName="TracesForFracture.txt";
-    writeTracesForFracture(outputName,FractureTraces);
+    int numTraces=Traces.size();
+    for (int i = 0; i < numTraces; ++i) {
+        Trace trace;
+        trace = Traces[i];
+        cout << "ID TRACCIA: " << endl << trace.id << endl;
+        cout << "ID PRIMA FRATTURA: " << endl << trace.Fracture1ID << endl;
+        cout << "ID SECONDA FRATTURA: " << endl << trace.Fracture2ID << endl;
+        cout<<"VERTICI:   "<<trace.firstPoint<<"  "<<trace.finalPoint<<endl;
+        cout << " " << endl;
 
-    vector<vector<Support>> Return;
+    }
+
+
+    // Traces=computeTraces(fractures);
+   // cout<<Traces.size()<<endl;
+    //string outputFileName="Traces.txt";
+    //vector<vector<Support>> FractureTraces = writeResult(outputFileName,Traces);
+    //string outputName="TracesForFracture.txt";
+    //writeTracesForFracture(outputName,FractureTraces);
+
+   vector<vector<Support>> Return;
     vector<Support> vec;
     Support S;
     S.idT=0;
@@ -75,8 +92,6 @@ int main()
     vecFractures.push_back(fracture2);
     vector<Trace> a;
     a=computeTraces(vecFractures);
-   // cout<<a[0].firstPoint<<endl<<a[0].finalPoint;
-    cout << a[0].vertex_Inters[0]<<"        "<<a[0].vertex_Inters[1]<<"        "<<a[0].vertex_Inters[2]<<"        "<<a[0].vertex_Inters[3]<<"        ";
 
 
 
@@ -86,4 +101,5 @@ int main()
 
   return 0;
 }
+
 */

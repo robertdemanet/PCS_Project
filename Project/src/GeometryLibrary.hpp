@@ -59,7 +59,7 @@ vector<Vector3d> TraceVertexes(Vector3d& Point1,
                                Vector3d& Point2,
                                Fracture& fracture1);
 
-bool comparePoints(const Vector3d& v1,const Vector3d& v2);
+vector<double> compareAlphas(double& alpha1,double& alpha2,double& alpha3,double& alpha4);
 bool compareLenght(const Support& Support1,const Support& Support2);
 
 
@@ -69,6 +69,7 @@ vector<vector<Support>> writeResult(const string& outputFilePath, // le posizion
 
 bool writeTracesForFracture(const string& outputFilePath,
                             vector<vector<Support>>& FractureTraces);
+
 
 
 
