@@ -42,6 +42,8 @@ struct Support{
     int idT;
     bool Tips;
     double lenght;
+    Vector3d firstPoint;
+    Vector3d finalPoint;
 };
 
 // Funzione per leggere il DFN
@@ -79,7 +81,7 @@ struct Cell2D{
     int numIDedges;
     vector<unsigned int> IDs_vertices;
     vector<unsigned int> IDs_edges;
-    bool status;
+    bool status=true;
 } ;
 
 
@@ -88,18 +90,20 @@ struct Cell2D{
 
 struct PolygonalMesh{
     //CELLE 0D
-    vector<unsigned int> Cell0Id={};
-    vector<Vector3d> Cell0dCoordinates={};
+    vector<unsigned int> Cell0ID={};
+    vector<Vector3d> Cell0DCoordinates={};
 
     //CELLE 1D
-    map<unsigned int,array< int,2>> Cell1;//sia id del lato sia ids dei vertici
+   // map<unsigned int,array< int,2>> Cell1D;//sia id del lato sia ids dei vertici
+    vector<int> Cell1ID={};
+    vector<Vector2i> Cell1DVertices={};
 
     // CELLE 2D
-    vector<Celle2D> vecCell2D;
+    vector<Cell2D> vecCell2D;
 
 };
 
-PolygonalMesh createMesh(vector<Fracture>& fractures,PolygonalMesh& mesh);
+PolygonalMesh createMesh(vector<Fracture>& fractures,PolygonalMesh& mesh,vector<vector<Support>>& Traces);
 
 
 }

@@ -2,6 +2,7 @@
 #include<algorithm>
 #include<cmath>
 #include <fstream>
+#include <sstream>
 #include <vector>
 
 using namespace std;
@@ -70,7 +71,7 @@ vector<Trace> computeTraces (vector<struct Fracture>& fractures)
                 vector<Vector3d > vertex_Inters2 =TraceVertexes(intersection_point,otherPoint,fractures[j]); // QUI HO C,D
                 if(vertex_Inters1.size()!=2 || vertex_Inters2.size()!=2)
                 {
-                    break;
+                    continue;
                 }
                 double alphaA;
                 double alphaB;
@@ -125,7 +126,7 @@ vector<Trace> computeTraces (vector<struct Fracture>& fractures)
                 vector<double> d=compareAlphas(alpha1,alpha2,alpha3,alpha4);
                 if(d.size()==0)
                 {
-                    break;
+                    continue;
                 }
 
 
@@ -204,7 +205,7 @@ vector<Vector3d> TraceVertexes(Vector3d& Point1,
 
         //controllo che le rette non siano parallele
         Vector3d control=t.cross(d);
-        if(control[0]!=0 || control[1]!=0 || control[2]!=0)
+        if(control.norm()>tol)
         {
             Vector2d solution=A.householderQr().solve(b);
 
@@ -298,6 +299,11 @@ vector<vector<Support>> writeResult(const string& outputFilePath,
         else {S.Tips=true;}
 
 
+        S.firstPoint=Traces[i].firstPoint;
+        S.finalPoint=Traces[i].finalPoint;
+
+
+
 
 
 
@@ -350,8 +356,10 @@ vector<vector<Support>> writeResult(const string& outputFilePath,
         sort(trueSupports.begin(),trueSupports.end(),compareLenght);
         sort(falseSupports.begin(),falseSupports.end(),compareLenght);
         vec.clear();
-        vec.insert(vec.end(),trueSupports.begin(),trueSupports.end());
         vec.insert(vec.end(),falseSupports.begin(),falseSupports.end());
+        vec.insert(vec.end(),trueSupports.begin(),trueSupports.end()); // Quindi per ogni frattura ho prima tutte le tracce passanti ordinate
+                                                                       // per lunghezza decrescente e poi tutte quelle non passanti ordinate
+                                                                       // allo stesso modo
 
     }
 
@@ -537,43 +545,326 @@ vector<Fracture> readDFN(const string &filename) {
 }
 //****************************************************************************************************************
 
-PolygonalMesh createMesh(vector<Fracture>& fractures,PolygonalMesh& mesh){
+PolygonalMesh createMesh(vector<Fracture>& fractures,PolygonalMesh& mesh,vector<vector<Support>>& Traces){
+    double tol=1e-9;
     for(size_t i = 0;i<fractures.size();++i)
     {
-        for(int j=0;j<fractures[i].numVertices;++j)
+        int numVertices=fractures[i].numVertices;
+        for(int j=0;j<numVertices;++j)
         {
-            mesh.Cell0Id.resize(fractures[i].numVertices);
-            mesh.Cell0dCoordinates.resize(fractures[i].numVertices);
-            mesh.Cell0Id.push_back(j);
-            mesh.Cell0dCoordinates.push_back(fractures[i].vertices.col(j));
 
-            mesh.Cell1[j]={j,(j+1) % fractures[i].numVertices};
+            mesh.Cell0ID.push_back(j);
+            mesh.Cell0DCoordinates.push_back(fractures[i].vertices.col(j));
+
+
+
+            mesh.Cell1ID.push_back(j);
+            Vector2i Vertices={j,(j+1) % numVertices};
+            mesh.Cell1DVertices.push_back(Vertices);
         }
         Cell2D cell2D;
-        cell2D.numIDvertices= mesh.Cell1.size()*2;
-        cell2D.IDs_vertices.resize(cell2D.numIDvertices);
-        cell2D.numIDedges=mesh.Cell1.size();
-        cell2D.IDs_edges.resize(cell2D.numIDedges);
-        for (const auto& elemento : mesh.Cell1)
-        {
-            cell2D.IDs_vertices.push_back(elemento.second[0]);
-            cell2D.IDs_vertices.push_back(elemento.second[1]);
-            cell2D.IDs_edges.push_back(elemento.first);
-        }
+        cell2D.numIDvertices= mesh.Cell1DVertices.size();
 
-        mesh.vecCell2D.resize(1);
+        cell2D.numIDedges=mesh.Cell1ID.size();
+
+
+        for(size_t r=0;r<mesh.Cell1DVertices.size();++r)
+        {
+            cell2D.IDs_vertices.push_back(mesh.Cell1DVertices[r][0]);
+
+        }
+        cell2D.IDs_edges.insert(cell2D.IDs_edges.end(),mesh.Cell1ID.begin(),mesh.Cell1ID.end());
+
+
         mesh.vecCell2D.push_back(cell2D);
+
+
+
+      for(size_t k=0;k<Traces[fractures[i].id].size();++k)
+      {   Cell2D firstCell2D;
+          Cell2D secondCell2D;
+       for(size_t h=0;h<mesh.vecCell2D.size();++h)
+       {
+        if(mesh.vecCell2D[h].status==true)
+           {
+            vector<unsigned int> edges = mesh.vecCell2D[h].IDs_edges;
+
+
+
+            Vector3d Vertex1=Traces[fractures[i].id][k].firstPoint;
+            Vector3d Vertex2=Traces[fractures[i].id][k].finalPoint;
+            int id_Vertex1=numVertices;
+            int id_Vertex2=numVertices+1;
+
+
+
+              if(Traces[fractures[i].id][k].Tips==false) //CONTROLLARE SE PRENDE FALSE O 1
+                {
+
+                    int index1;
+                    int index2;
+                    for(int z=0;z<mesh.vecCell2D[h].numIDedges;++z)
+                    {
+                     //Vector3d Coordinate1=mesh.Cell0DCoordinates[mesh.Cell1DVertices[edges[z]][0]];//ho messo z al posto di edges[z]
+                    // Vector3d Coordinate2=mesh.Cell0DCoordinates[mesh.Cell1DVertices[edges[z]][1]];
+                     Vector3d Coordinate1=mesh.Cell0DCoordinates[mesh.vecCell2D[h].IDs_vertices[z]];
+                     Vector3d Coordinate2=mesh.Cell0DCoordinates[mesh.vecCell2D[h].IDs_vertices[(z+1) % mesh.vecCell2D[h].IDs_vertices.size()]];
+
+
+
+
+
+
+
+                     Vector3d AB=Coordinate2-Coordinate1;
+                     Vector3d AP= Vertex1-Coordinate1;
+                     Vector3d AP2=Vertex2-Coordinate1;
+                     Vector3d t =AB.cross(AP);
+                     Vector3d t2 =AB.cross(AP2);
+                     if(abs(t[0])<tol && abs(t[1])<tol && abs(t[2])<tol)
+                     {
+                         index1=z;
+                     }
+
+
+                    if(abs(t2[0])<tol && abs(t2[1])<tol && abs(t2[2])<tol)
+                    {
+                        index2=z;
+                    }
+                    }
+                    if (index2<index1)
+                    {
+                    int temp = index1; // Utilizziamo una variabile temporanea per effettuare lo scambio
+                    index1 = index2;
+                    index2 = temp;
+                    cout<<index1<<endl;
+                    cout<<index2<<endl;
+
+
+                    }
+                    Vector2i val={id_Vertex1,mesh.Cell1DVertices[edges[index1]][1]};
+                    Vector2i val2={id_Vertex2,mesh.Cell1DVertices[edges[index2]][1]};
+                    // Aggiorno le Celle0D
+                    mesh.Cell0ID.push_back(id_Vertex1);
+                    mesh.Cell0ID.push_back(id_Vertex2);
+                    mesh.Cell0DCoordinates.push_back(Vertex1);
+                    mesh.Cell0DCoordinates.push_back(Vertex2);
+
+                    // INDEX 1
+                    //AGGIORNO LE CELLE 1D
+                    mesh.Cell1DVertices[edges[index1]][1]=id_Vertex1;
+                    mesh.Cell1DVertices.insert(mesh.Cell1DVertices.begin()+ index1+1,val);
+                    mesh.Cell1ID.push_back(numVertices);
+
+                    //AGGIORNO LE CELLE 2D
+
+                    mesh.vecCell2D[h].IDs_vertices.insert(mesh.vecCell2D[h].IDs_vertices.begin()+index1+1,id_Vertex1);
+
+
+
+                    mesh.vecCell2D[h].numIDvertices=mesh.vecCell2D[h].numIDvertices+1;
+
+                    mesh.vecCell2D[h].IDs_edges.push_back(numVertices);
+                    mesh.vecCell2D[h].numIDedges=mesh.vecCell2D[h].numIDedges+1;
+
+
+                    //INDEX 2
+
+                    //AGGIORNO LE CELLE 1D
+                    mesh.Cell1DVertices[edges[index2+1]][1]=id_Vertex2;
+                    mesh.Cell1DVertices.insert(mesh.Cell1DVertices.begin()+ index2+2,val2);
+
+                    mesh.Cell1ID.push_back(numVertices+1);
+
+
+                    //AGGIORNO LE CELLE 2D
+
+                    mesh.vecCell2D[h].IDs_vertices.insert(mesh.vecCell2D[h].IDs_vertices.begin()+index2+2,id_Vertex2);
+                    mesh.vecCell2D[h].numIDvertices=mesh.vecCell2D[h].numIDvertices+1;
+
+                    mesh.vecCell2D[h].IDs_edges.push_back(numVertices+1);
+                    mesh.vecCell2D[h].numIDedges=mesh.vecCell2D[h].numIDedges+1;
+
+
+
+              }
+
+
+
+              //tracce non passanti
+              else
+              {
+                  int index1;
+                  int index2;
+                  vector<Vector3d> vertex_Inters;
+                  vector<int> indexes;
+                  Fracture fracture;
+                  fracture.id=0;
+                  fracture.vertices = MatrixXd::Zero(3,4);
+                  fracture.numVertices=mesh.vecCell2D[h].numIDedges;
+                  for(int z=0;z<mesh.vecCell2D[h].numIDedges;++z)
+                  {
+                      Vector3d Coordinate1=mesh.Cell0DCoordinates[mesh.vecCell2D[h].IDs_vertices[z]];
+                     // Vector3d Coordinate2=mesh.Cell0DCoordinates[mesh.vecCell2D[h].IDs_vertices[(z+1) % mesh.vecCell2D[h].IDs_vertices.size()]];
+                      fracture.vertices.col(z)=Coordinate1;
+
+                  }
+                  vertex_Inters=TraceVertexes(Vertex1,Vertex2,fracture);
+
+                /*  for(int z=0;z<mesh.vecCell2D[h].numIDedges;++z)
+                 {
+                    Vector3d Coordinate1=mesh.Cell0DCoordinates[mesh.vecCell2D[h].IDs_vertices[z]];
+                    Vector3d Coordinate2=mesh.Cell0DCoordinates[mesh.vecCell2D[h].IDs_vertices[(z+1) % mesh.vecCell2D[h].IDs_vertices.size()]];
+                    MatrixXd A(3,2);
+                   // A.resize(3,2);
+                    Vector3d b=Coordinate1-Vertex1;
+
+                    Vector3d d=Coordinate2-Coordinate1;
+
+                    Vector3d c= Vertex2-Vertex1;
+                    A<< c,d;
+
+
+                    //controllo che le rette non siano parallele
+                    Vector3d control=c.cross(d);
+                    // sostituire con .norm()
+                    if(control.norm()>tol)
+                    {
+                      Vector2d solution=A.householderQr().solve(b);
+
+                      Vector3d intersectionPoint=Vertex1+solution[0]*c;
+                      if( (-solution[1]>=0-tol && -solution[1]<=1+tol))
+                      {
+                          vertex_Inters.push_back(intersectionPoint);
+                          indexes.push_back(z);
+                      }
+
+
+
+
+
+                    }
+
+                }*/
+
+
+                  Vector3d vertex1=vertex_Inters[0];
+                  Vector3d vertex2=vertex_Inters[1];
+                  if(indexes[1]<indexes[0])
+                  {
+                      int temp = indexes[0];
+                      indexes[0] = indexes[1];
+                      indexes[1] = temp;
+                  }
+                  index1=indexes[0];
+                  index2=indexes[1];
+
+                  Vector2i val={id_Vertex1,mesh.Cell1DVertices[edges[index1]][1]};
+                  Vector2i val2={id_Vertex2,mesh.Cell1DVertices[edges[index2]][1]};
+                  mesh.Cell0ID.push_back(id_Vertex1);
+                  mesh.Cell0ID.push_back(id_Vertex2);
+                  mesh.Cell0DCoordinates.push_back(vertex1);
+                  mesh.Cell0DCoordinates.push_back(vertex2);
+
+                  // INDEX 1
+                  //AGGIORNO LE CELLE 1D
+                  mesh.Cell1DVertices[edges[index1]][1]=id_Vertex1;
+                  mesh.Cell1DVertices.insert(mesh.Cell1DVertices.begin()+ index1+1,val);
+
+                  mesh.Cell1ID.push_back(numVertices);
+
+
+                  //AGGIORNO LE CELLE 2D
+
+                  mesh.vecCell2D[h].IDs_vertices.insert(mesh.vecCell2D[h].IDs_vertices.begin()+index1+1,id_Vertex1);
+
+
+
+                  mesh.vecCell2D[h].numIDvertices=mesh.vecCell2D[h].numIDvertices+1;
+
+                  mesh.vecCell2D[h].IDs_edges.push_back(numVertices);
+                  mesh.vecCell2D[h].numIDedges=mesh.vecCell2D[h].numIDedges+1;
+
+
+
+                  //INDEX 2
+
+                  //AGGIORNO LE CELLE 1D
+                  mesh.Cell1DVertices[edges[index2+1]][1]=id_Vertex2;
+                  mesh.Cell1DVertices.insert(mesh.Cell1DVertices.begin()+ index2+2,val2);
+                  mesh.Cell1ID.push_back(numVertices+1);
+
+
+                  //AGGIORNO LE CELLE 2D
+
+                  mesh.vecCell2D[h].IDs_vertices.insert(mesh.vecCell2D[h].IDs_vertices.begin()+index2+2,id_Vertex2);
+                  mesh.vecCell2D[h].numIDvertices=mesh.vecCell2D[h].numIDvertices+1;
+                  mesh.vecCell2D[h].IDs_edges.push_back(numVertices+1);
+                  mesh.vecCell2D[h].numIDedges=mesh.vecCell2D[h].numIDedges+1;
+
+
+
+
+
+
+
+
+         }
+
+
+             auto initV1 =find(mesh.vecCell2D[h].IDs_vertices.begin(),mesh.vecCell2D[h].IDs_vertices.end(),id_Vertex1);
+             size_t index=distance(mesh.vecCell2D[h].IDs_vertices.begin(),initV1);
+
+
+
+                while  (mesh.vecCell2D[h].IDs_vertices[index % mesh.vecCell2D[h].IDs_vertices.size()]!=id_Vertex2) {
+
+
+                     firstCell2D.IDs_vertices.push_back(mesh.vecCell2D[h].IDs_vertices[index % mesh.vecCell2D[h].IDs_vertices.size()]);
+                     firstCell2D.IDs_edges.push_back(index % mesh.vecCell2D[h].IDs_vertices.size());
+                     index=index+1;
+
+
+                 }
+                while (mesh.vecCell2D[h].IDs_vertices[index % mesh.vecCell2D[h].IDs_vertices.size()]!=id_Vertex1){
+
+                     secondCell2D.IDs_vertices.push_back(mesh.vecCell2D[h].IDs_vertices[index % mesh.vecCell2D[h].IDs_vertices.size()]);
+                     secondCell2D.IDs_edges.push_back(index % mesh.vecCell2D[h].IDs_vertices.size());//verificare che la % va fatta con IDVertices e non Edges
+                     index=index+1;
+
+                 }
+            // }
+             firstCell2D.numIDvertices=firstCell2D.IDs_vertices.size()+1;
+             firstCell2D.numIDedges=firstCell2D.IDs_edges.size()+1;
+             firstCell2D.IDs_edges.push_back(mesh.Cell1ID.size());
+             firstCell2D.IDs_vertices.push_back(id_Vertex2);
+
+
+             secondCell2D.numIDvertices=secondCell2D.IDs_vertices.size()+1;
+             secondCell2D.numIDedges=secondCell2D.IDs_edges.size()+1;
+             secondCell2D.IDs_edges.push_back(mesh.Cell1ID.size());
+             secondCell2D.IDs_vertices.push_back(id_Vertex1);
+
+             mesh.vecCell2D[h].status=false;
+
+
+
+
 
     }
 
 
+  }
+
+   numVertices=numVertices+2;
+   mesh.vecCell2D.push_back(firstCell2D);
+   mesh.vecCell2D.push_back(secondCell2D);
+  }
 
 
 
-
-
-
-
+ }
+    return mesh;
 }
 
 
@@ -594,64 +885,4 @@ PolygonalMesh createMesh(vector<Fracture>& fractures,PolygonalMesh& mesh){
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
