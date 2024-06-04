@@ -574,27 +574,39 @@ PolygonalMesh createMesh(vector<Fracture>& fractures,PolygonalMesh& mesh,vector<
 
         }
         cell2D.IDs_edges.insert(cell2D.IDs_edges.end(),mesh.Cell1ID.begin(),mesh.Cell1ID.end());
-
-
         mesh.vecCell2D.push_back(cell2D);
 
 
 
-      for(size_t k=0;k<Traces[fractures[i].id].size();++k)
-      {   Cell2D firstCell2D;
-          Cell2D secondCell2D;
-       for(size_t h=0;h<mesh.vecCell2D.size();++h)
-       {
-        if(mesh.vecCell2D[h].status==true)
-           {
-            vector<unsigned int> edges = mesh.vecCell2D[h].IDs_edges;
+        size_t dim=1;
+        for(size_t k=0;k<Traces[fractures[i].id].size();++k)
+        {
+         for(size_t h=0;h<dim;++h)
+         {
+            Cell2D firstCell2D;
+            Cell2D secondCell2D;
+            Vector3d Vertex1;
+            Vector3d Vertex2;
 
 
+            if(Traces[fractures[i].id][k].finalPoint[0]==Traces[fractures[i].id][k].firstPoint[0] &&
+                Traces[fractures[i].id][k].finalPoint[1]<Traces[fractures[i].id][k].firstPoint[1] )
+            {
+                Vertex1=Traces[fractures[i].id][k].finalPoint;
+                Vertex2=Traces[fractures[i].id][k].firstPoint;
+            }
+            else
+            {
+                Vertex1=Traces[fractures[i].id][k].firstPoint;
+                Vertex2=Traces[fractures[i].id][k].finalPoint;
+            }
 
-            Vector3d Vertex1=Traces[fractures[i].id][k].firstPoint;
-            Vector3d Vertex2=Traces[fractures[i].id][k].finalPoint;
-            int id_Vertex1=numVertices;
-            int id_Vertex2=numVertices+1;
+            if(mesh.vecCell2D[h].status==true)
+            {
+             vector<unsigned int> edges = mesh.vecCell2D[h].IDs_edges;
+
+             unsigned int id_Vertex1=numVertices;
+             unsigned int id_Vertex2=numVertices+1;
 
 
 
@@ -605,8 +617,6 @@ PolygonalMesh createMesh(vector<Fracture>& fractures,PolygonalMesh& mesh,vector<
                     int index2;
                     for(int z=0;z<mesh.vecCell2D[h].numIDedges;++z)
                     {
-                     //Vector3d Coordinate1=mesh.Cell0DCoordinates[mesh.Cell1DVertices[edges[z]][0]];//ho messo z al posto di edges[z]
-                    // Vector3d Coordinate2=mesh.Cell0DCoordinates[mesh.Cell1DVertices[edges[z]][1]];
                      Vector3d Coordinate1=mesh.Cell0DCoordinates[mesh.vecCell2D[h].IDs_vertices[z]];
                      Vector3d Coordinate2=mesh.Cell0DCoordinates[mesh.vecCell2D[h].IDs_vertices[(z+1) % mesh.vecCell2D[h].IDs_vertices.size()]];
 
@@ -632,16 +642,11 @@ PolygonalMesh createMesh(vector<Fracture>& fractures,PolygonalMesh& mesh,vector<
                         index2=z;
                     }
                     }
-                    if (index2<index1)
-                    {
-                    int temp = index1; // Utilizziamo una variabile temporanea per effettuare lo scambio
-                    index1 = index2;
-                    index2 = temp;
-                    cout<<index1<<endl;
-                    cout<<index2<<endl;
 
 
-                    }
+
+
+                    Vector2i vec={id_Vertex2,id_Vertex1};
                     Vector2i val={id_Vertex1,mesh.Cell1DVertices[edges[index1]][1]};
                     Vector2i val2={id_Vertex2,mesh.Cell1DVertices[edges[index2]][1]};
                     // Aggiorno le Celle0D
@@ -653,7 +658,7 @@ PolygonalMesh createMesh(vector<Fracture>& fractures,PolygonalMesh& mesh,vector<
                     // INDEX 1
                     //AGGIORNO LE CELLE 1D
                     mesh.Cell1DVertices[edges[index1]][1]=id_Vertex1;
-                    mesh.Cell1DVertices.insert(mesh.Cell1DVertices.begin()+ index1+1,val);
+                    mesh.Cell1DVertices.insert(mesh.Cell1DVertices.begin()+ edges[index1]+1,val);
                     mesh.Cell1ID.push_back(numVertices);
 
                     //AGGIORNO LE CELLE 2D
@@ -671,9 +676,9 @@ PolygonalMesh createMesh(vector<Fracture>& fractures,PolygonalMesh& mesh,vector<
                     //INDEX 2
 
                     //AGGIORNO LE CELLE 1D
-                    mesh.Cell1DVertices[edges[index2+1]][1]=id_Vertex2;
-                    mesh.Cell1DVertices.insert(mesh.Cell1DVertices.begin()+ index2+2,val2);
-
+                    mesh.Cell1DVertices[edges[index2]+1][1]=id_Vertex2;
+                    mesh.Cell1DVertices.insert(mesh.Cell1DVertices.begin()+ edges[index2]+2,val2);
+                    mesh.Cell1DVertices.push_back(vec);
                     mesh.Cell1ID.push_back(numVertices+1);
 
 
@@ -687,31 +692,20 @@ PolygonalMesh createMesh(vector<Fracture>& fractures,PolygonalMesh& mesh,vector<
 
 
 
-              }
+                }
 
 
 
-              //tracce non passanti
-              else
-              {
-                  int index1;
-                  int index2;
-                  vector<Vector3d> vertex_Inters;
-                  vector<int> indexes;
-                  Fracture fracture;
-                  fracture.id=0;
-                  fracture.vertices = MatrixXd::Zero(3,4);
-                  fracture.numVertices=mesh.vecCell2D[h].numIDedges;
-                  for(int z=0;z<mesh.vecCell2D[h].numIDedges;++z)
-                  {
-                      Vector3d Coordinate1=mesh.Cell0DCoordinates[mesh.vecCell2D[h].IDs_vertices[z]];
-                     // Vector3d Coordinate2=mesh.Cell0DCoordinates[mesh.vecCell2D[h].IDs_vertices[(z+1) % mesh.vecCell2D[h].IDs_vertices.size()]];
-                      fracture.vertices.col(z)=Coordinate1;
+               //tracce non passanti
+               else
+               {
+                int index1;
+                int index2;
+                vector<Vector3d> vertex_Inters;
+                vector<int> indexes;
+                Vector3d c= Vertex2-Vertex1;
 
-                  }
-                  vertex_Inters=TraceVertexes(Vertex1,Vertex2,fracture);
-
-                /*  for(int z=0;z<mesh.vecCell2D[h].numIDedges;++z)
+                 for(int z=0;z<mesh.vecCell2D[h].numIDedges;++z)
                  {
                     Vector3d Coordinate1=mesh.Cell0DCoordinates[mesh.vecCell2D[h].IDs_vertices[z]];
                     Vector3d Coordinate2=mesh.Cell0DCoordinates[mesh.vecCell2D[h].IDs_vertices[(z+1) % mesh.vecCell2D[h].IDs_vertices.size()]];
@@ -721,23 +715,23 @@ PolygonalMesh createMesh(vector<Fracture>& fractures,PolygonalMesh& mesh,vector<
 
                     Vector3d d=Coordinate2-Coordinate1;
 
-                    Vector3d c= Vertex2-Vertex1;
+
                     A<< c,d;
 
 
                     //controllo che le rette non siano parallele
                     Vector3d control=c.cross(d);
-                    // sostituire con .norm()
+
                     if(control.norm()>tol)
                     {
                       Vector2d solution=A.householderQr().solve(b);
 
                       Vector3d intersectionPoint=Vertex1+solution[0]*c;
                       if( (-solution[1]>=0-tol && -solution[1]<=1+tol))
-                      {
+                        {
                           vertex_Inters.push_back(intersectionPoint);
                           indexes.push_back(z);
-                      }
+                        }
 
 
 
@@ -745,120 +739,109 @@ PolygonalMesh createMesh(vector<Fracture>& fractures,PolygonalMesh& mesh,vector<
 
                     }
 
-                }*/
-
-
-                  Vector3d vertex1=vertex_Inters[0];
-                  Vector3d vertex2=vertex_Inters[1];
-                  if(indexes[1]<indexes[0])
-                  {
-                      int temp = indexes[0];
-                      indexes[0] = indexes[1];
-                      indexes[1] = temp;
-                  }
-                  index1=indexes[0];
-                  index2=indexes[1];
-
-                  Vector2i val={id_Vertex1,mesh.Cell1DVertices[edges[index1]][1]};
-                  Vector2i val2={id_Vertex2,mesh.Cell1DVertices[edges[index2]][1]};
-                  mesh.Cell0ID.push_back(id_Vertex1);
-                  mesh.Cell0ID.push_back(id_Vertex2);
-                  mesh.Cell0DCoordinates.push_back(vertex1);
-                  mesh.Cell0DCoordinates.push_back(vertex2);
-
-                  // INDEX 1
-                  //AGGIORNO LE CELLE 1D
-                  mesh.Cell1DVertices[edges[index1]][1]=id_Vertex1;
-                  mesh.Cell1DVertices.insert(mesh.Cell1DVertices.begin()+ index1+1,val);
-
-                  mesh.Cell1ID.push_back(numVertices);
-
-
-                  //AGGIORNO LE CELLE 2D
-
-                  mesh.vecCell2D[h].IDs_vertices.insert(mesh.vecCell2D[h].IDs_vertices.begin()+index1+1,id_Vertex1);
-
-
-
-                  mesh.vecCell2D[h].numIDvertices=mesh.vecCell2D[h].numIDvertices+1;
-
-                  mesh.vecCell2D[h].IDs_edges.push_back(numVertices);
-                  mesh.vecCell2D[h].numIDedges=mesh.vecCell2D[h].numIDedges+1;
-
-
-
-                  //INDEX 2
-
-                  //AGGIORNO LE CELLE 1D
-                  mesh.Cell1DVertices[edges[index2+1]][1]=id_Vertex2;
-                  mesh.Cell1DVertices.insert(mesh.Cell1DVertices.begin()+ index2+2,val2);
-                  mesh.Cell1ID.push_back(numVertices+1);
-
-
-                  //AGGIORNO LE CELLE 2D
-
-                  mesh.vecCell2D[h].IDs_vertices.insert(mesh.vecCell2D[h].IDs_vertices.begin()+index2+2,id_Vertex2);
-                  mesh.vecCell2D[h].numIDvertices=mesh.vecCell2D[h].numIDvertices+1;
-                  mesh.vecCell2D[h].IDs_edges.push_back(numVertices+1);
-                  mesh.vecCell2D[h].numIDedges=mesh.vecCell2D[h].numIDedges+1;
-
-
-
-
-
-
-
-
-         }
-
-
-             auto initV1 =find(mesh.vecCell2D[h].IDs_vertices.begin(),mesh.vecCell2D[h].IDs_vertices.end(),id_Vertex1);
-             size_t index=distance(mesh.vecCell2D[h].IDs_vertices.begin(),initV1);
-
-
-
-                while  (mesh.vecCell2D[h].IDs_vertices[index % mesh.vecCell2D[h].IDs_vertices.size()]!=id_Vertex2) {
-
-
-                     firstCell2D.IDs_vertices.push_back(mesh.vecCell2D[h].IDs_vertices[index % mesh.vecCell2D[h].IDs_vertices.size()]);
-                     firstCell2D.IDs_edges.push_back(index % mesh.vecCell2D[h].IDs_vertices.size());
-                     index=index+1;
-
-
                  }
-                while (mesh.vecCell2D[h].IDs_vertices[index % mesh.vecCell2D[h].IDs_vertices.size()]!=id_Vertex1){
-
-                     secondCell2D.IDs_vertices.push_back(mesh.vecCell2D[h].IDs_vertices[index % mesh.vecCell2D[h].IDs_vertices.size()]);
-                     secondCell2D.IDs_edges.push_back(index % mesh.vecCell2D[h].IDs_vertices.size());//verificare che la % va fatta con IDVertices e non Edges
-                     index=index+1;
-
-                 }
-            // }
-             firstCell2D.numIDvertices=firstCell2D.IDs_vertices.size()+1;
-             firstCell2D.numIDedges=firstCell2D.IDs_edges.size()+1;
-             firstCell2D.IDs_edges.push_back(mesh.Cell1ID.size());
-             firstCell2D.IDs_vertices.push_back(id_Vertex2);
 
 
-             secondCell2D.numIDvertices=secondCell2D.IDs_vertices.size()+1;
-             secondCell2D.numIDedges=secondCell2D.IDs_edges.size()+1;
-             secondCell2D.IDs_edges.push_back(mesh.Cell1ID.size());
-             secondCell2D.IDs_vertices.push_back(id_Vertex1);
+                Vector3d vertex1=vertex_Inters[0];
+                Vector3d vertex2=vertex_Inters[1];
 
-             mesh.vecCell2D[h].status=false;
+                index1=indexes[0];
+                index2=indexes[1];
+                Vector2i vec={id_Vertex2,id_Vertex1};
+                Vector2i val={id_Vertex1,mesh.Cell1DVertices[edges[index1]][1]};
+                Vector2i val2={id_Vertex2,mesh.Cell1DVertices[edges[index2]][1]};
+                mesh.Cell0ID.push_back(id_Vertex1);
+                mesh.Cell0ID.push_back(id_Vertex2);
+                mesh.Cell0DCoordinates.push_back(vertex1);
+                mesh.Cell0DCoordinates.push_back(vertex2);
+
+                // INDEX 1
+                //AGGIORNO LE CELLE 1D
+                mesh.Cell1DVertices[edges[index1]][1]=id_Vertex1;
+                mesh.Cell1DVertices.insert(mesh.Cell1DVertices.begin()+edges[index1]+1,val);
+                mesh.Cell1ID.push_back(numVertices);
+
+
+                //AGGIORNO LE CELLE 2D
+
+                mesh.vecCell2D[h].IDs_vertices.insert(mesh.vecCell2D[h].IDs_vertices.begin()+index1+1,id_Vertex1);
+
+
+
+                mesh.vecCell2D[h].numIDvertices=mesh.vecCell2D[h].numIDvertices+1;
+
+                mesh.vecCell2D[h].IDs_edges.push_back(numVertices);
+                mesh.vecCell2D[h].numIDedges=mesh.vecCell2D[h].numIDedges+1;
+
+
+
+                //INDEX 2
+
+                //AGGIORNO LE CELLE 1D
+                mesh.Cell1DVertices[edges[index2]+1][1]=id_Vertex2;
+                mesh.Cell1DVertices.insert(mesh.Cell1DVertices.begin()+ edges[index2]+2,val2);
+                mesh.Cell1DVertices.push_back(vec);
+                mesh.Cell1ID.push_back(numVertices+1);
+
+
+                //AGGIORNO LE CELLE 2D
+
+                mesh.vecCell2D[h].IDs_vertices.insert(mesh.vecCell2D[h].IDs_vertices.begin()+index2+2,id_Vertex2);
+                mesh.vecCell2D[h].numIDvertices=mesh.vecCell2D[h].numIDvertices+1;
+                mesh.vecCell2D[h].IDs_edges.push_back(numVertices+1);
+                mesh.vecCell2D[h].numIDedges=mesh.vecCell2D[h].numIDedges+1;
+               }
+
+
+            auto initV1 =find(mesh.vecCell2D[h].IDs_vertices.begin(),mesh.vecCell2D[h].IDs_vertices.end(),id_Vertex1);
+            size_t index=distance(mesh.vecCell2D[h].IDs_vertices.begin(),initV1);
+
+
+
+            while  (mesh.vecCell2D[h].IDs_vertices[index % mesh.vecCell2D[h].IDs_vertices.size()]!=id_Vertex2)
+            {
+                firstCell2D.IDs_vertices.push_back(mesh.vecCell2D[h].IDs_vertices[index % mesh.vecCell2D[h].IDs_vertices.size()]);
+                firstCell2D.IDs_edges.push_back(index % mesh.vecCell2D[h].IDs_vertices.size());
+                index=index+1;
+
+
+            }
+            while (mesh.vecCell2D[h].IDs_vertices[index % mesh.vecCell2D[h].IDs_vertices.size()]!=id_Vertex1)
+            {
+
+                secondCell2D.IDs_vertices.push_back(mesh.vecCell2D[h].IDs_vertices[index % mesh.vecCell2D[h].IDs_vertices.size()]);
+                secondCell2D.IDs_edges.push_back(index % mesh.vecCell2D[h].IDs_vertices.size());
+                index=index+1;
+
+            }
+
+            firstCell2D.numIDvertices=firstCell2D.IDs_vertices.size()+1;
+            firstCell2D.numIDedges=firstCell2D.IDs_edges.size()+1;
+            firstCell2D.IDs_edges.push_back(mesh.Cell1ID.size());
+            firstCell2D.IDs_vertices.push_back(id_Vertex2);
+
+
+            secondCell2D.numIDvertices=secondCell2D.IDs_vertices.size()+1;
+            secondCell2D.numIDedges=secondCell2D.IDs_edges.size()+1;
+            secondCell2D.IDs_edges.push_back(mesh.Cell1ID.size());
+            secondCell2D.IDs_vertices.push_back(id_Vertex1);
+
+            mesh.vecCell2D[h].status=false;
+            mesh.vecCell2D.push_back(firstCell2D);
+            mesh.vecCell2D.push_back(secondCell2D);
+            numVertices=numVertices+2;
 
 
 
 
 
-    }
+        }
 
 
   }
 
-   numVertices=numVertices+2;
-   mesh.vecCell2D.push_back(firstCell2D);
-   mesh.vecCell2D.push_back(secondCell2D);
+  dim=mesh.vecCell2D.size();
+
   }
 
 
